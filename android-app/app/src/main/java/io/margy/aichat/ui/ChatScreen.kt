@@ -217,7 +217,7 @@ private fun ModelChipsRow(vm: ChatViewModel) {
             val label = id.substringAfterLast('/')
             val isActive = current == id
             val isFree = id.endsWith(":free")
-            AssistChip(
+            FilterChip(
                 selected = isActive,
                 onClick = {
                     vm.settings.let { s ->
@@ -228,17 +228,11 @@ private fun ModelChipsRow(vm: ChatViewModel) {
                     Text(
                         label.take(18),
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.onSurface
+                            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
                         ),
                         maxLines = 1
                     )
-                },
-                colors = AssistChipDefaults.colors(
-                    containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
-                    else MaterialTheme.colorScheme.surfaceContainerLow
-                )
+                }
             )
             if (isFree) {
                 Spacer(Modifier.width(2.dp))
