@@ -2,7 +2,7 @@ package io.margy.aichat.data
 
 import android.content.Context
 
-const val DEFAULT_SYSTEM = "Ты — дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
+const val DEFAULT_SYSTEM = "Ты — дружелюбный и умный ассистент LotiChat. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
 const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_DEEPSEEK = "deepseek"
@@ -22,7 +22,7 @@ val MODEL_PRESETS = listOf(
 
 val DEEPSEEK_PRESETS = listOf("deepseek-chat", "deepseek-reasoner")
 
-/// 3 демо-модели, которые работают БЕЗ ключа — сразу после установки
+/// Бесплатные модели без ключа — работают сразу после установки
 val BUILTIN_FREE_MODELS = listOf(
     "demo:claude",
     "demo:gpt",
@@ -42,10 +42,12 @@ data class AppSettings(
     val dynamicColor: Boolean = true,
     val themeMode: String = "system",
     val accent: Int = 0,
-    val sendImages: Boolean = true,
     val firstRun: Boolean = true,
     val devMode: Boolean = false,
-    val devPassword: String = ""
+    // Аккаунт
+    val accountUser: String = "",
+    val accountPass: String = "",
+    val accountLoggedIn: Boolean = false
 ) {
     fun defaultModel(): String = when (provider) {
         PROVIDER_DEEPSEEK -> DEFAULT_DEEPSEEK_MODEL
@@ -70,10 +72,11 @@ class SettingsStore(context: Context) {
         dynamicColor = sp.getBoolean("dynamicColor", true),
         themeMode = sp.getString("themeMode", "system") ?: "system",
         accent = sp.getInt("accent", 0),
-        sendImages = sp.getBoolean("sendImages", true),
         firstRun = sp.getBoolean("firstRun", true),
         devMode = sp.getBoolean("devMode", false),
-        devPassword = sp.getString("devPassword", "").orEmpty()
+        accountUser = sp.getString("accountUser", "").orEmpty(),
+        accountPass = sp.getString("accountPass", "").orEmpty(),
+        accountLoggedIn = sp.getBoolean("accountLoggedIn", false)
     )
 
     fun save(s: AppSettings) {
@@ -87,10 +90,11 @@ class SettingsStore(context: Context) {
             .putBoolean("dynamicColor", s.dynamicColor)
             .putString("themeMode", s.themeMode)
             .putInt("accent", s.accent)
-            .putBoolean("sendImages", s.sendImages)
             .putBoolean("firstRun", s.firstRun)
             .putBoolean("devMode", s.devMode)
-            .putString("devPassword", s.devPassword)
+            .putString("accountUser", s.accountUser)
+            .putString("accountPass", s.accountPass)
+            .putBoolean("accountLoggedIn", s.accountLoggedIn)
             .apply()
     }
 }

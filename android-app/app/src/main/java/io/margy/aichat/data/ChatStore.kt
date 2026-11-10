@@ -4,20 +4,26 @@ import android.content.Context
 import java.io.File
 
 class ChatStore(context: Context) {
-    private val file = File(context.filesDir, "chats.json")
+    private val filesDir = context.filesDir
+
+    private fun fileFor(user: String): File {
+        return if (user.isNotBlank()) File(filesDir, "chats_${user}.json") else File(filesDir, "chats.json")
+    }
 
     @Synchronized
-    fun load(): List<Chat> = runCatching {
-        if (!file.exists()) emptyList() else ChatJson.decode(file.readText())
+    fun load(accountUser: String): List<Chat> = runCatching {
+        val f = fileFor(accountUser)
+        if (!f.exists()) emptyList() else ChatJson.decode(f.readText())
     }.getOrDefault(emptyList())
 
     @Synchronized
-    fun save(chats: List<Chat>) {
+    fun save(chats: List<Chat>, accountUser: String) {
         runCatching {
-            val tmp = File(file.parentFile, "chats.tmp")
+            val f = fileFor(accountUser)
+            val tmp = File(filesDir, "chats_${accountUser}.tmp")
             tmp.writeText(ChatJson.encode(chats))
-            if (file.exists()) file.delete()
-            tmp.renameTo(file)
+            if (f.exists()) f.delete()
+            tmp.renameTo(f)
         }
     }
 }

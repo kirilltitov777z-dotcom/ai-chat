@@ -47,9 +47,12 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Login
 import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Public
@@ -69,6 +72,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -98,14 +102,114 @@ fun LotiChatRoot(vm: ChatViewModel) {
                 vm.consumeToast()
             }
         }
-        if (vm.screen == "settings") {
-            SettingsScreen(vm = vm, onBack = { vm.closeSettings() })
-        } else {
-            ChatScreen(vm = vm, onOpenSettings = { vm.openSettings() })
+        when (vm.screen) {
+            "login" -> LoginScreen(vm = vm, onLogin = { vm.closeLogin() })
+            "settings" -> SettingsScreen(vm = vm, onBack = { vm.closeSettings() })
+            else -> ChatScreen(vm = vm, onOpenSettings = { vm.openSettings() })
         }
         if (vm.showModelPicker) {
             ModelPickerDialog(vm)
         }
+    }
+}
+
+@Composable
+private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
+    var user by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    var mode by remember { mutableStateOf("login") } // "login" или "register"
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Spacer(Modifier.height(40.dp))
+        Icon(
+            Icons.Rounded.Person,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            "LotiChat",
+            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
+        )
+        Text(
+            "Вход в аккаунт — твоя переписка сохраняется",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(24.dp))
+
+        OutlinedTextField(
+            value = user,
+            onValueChange = { user = it },
+            label = { Text("Логин") },
+            placeholder = { Text("придумай логин") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(12.dp))
+        OutlinedTextField(
+            value = pass,
+            onValueChange = { pass = it },
+            label = { Text("Пароль") },
+            placeholder = { Text("придумай пароль") },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(Modifier.height(16.dp))
+
+        if (mode == "login") {
+            Button(
+                onClick = {
+                    if (vm.loginAccount(user, pass)) onLogin()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) { Text("Войти") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { mode = "register" }
+            ) { Text("Ещё нет аккаунта? Создать") }
+        } else {
+            Button(
+                onClick = {
+                    if (vm.registerAccount(user, pass)) onLogin()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) { Text("Зарегистрироваться") }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { mode = "login" }
+            ) { Text("Уже есть аккаунт? Войти") }
+        }
+
+        if (s.accountUser.isNotBlank() && !s.accountLoggedIn) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                "Аккаунт найден: ${s.accountUser}. Введи пароль для входа.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+        TextButton(onClick = {
+            vm.closeLogin()
+            vm.screen = "chat"
+        }) { Text("Продолжить без аккаунта") }
     }
 }
 
@@ -114,7 +218,7 @@ private fun modelLabel(vm: ChatViewModel): String {
     val provider = when (s.provider) {
         "deepseek" -> "DeepSeek"
         "custom" -> "Свой сервер"
-        "demo" -> "Демо (без ключа)"
+        "demo" -> "Бесплатно (без ключа)"
         else -> "OpenRouter"
     }
     val model = s.model.ifBlank { s.defaultModel() }.substringAfterLast('/')
@@ -168,7 +272,7 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                         Column {
                             Text("LotiChat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                             Text(
-                                modelLabel(vm),
+                                if (vm.isLoggedIn) "Аккаунт: ${vm.settings.accountUser}" else "Без аккаунта",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -182,9 +286,8 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                         }
                     },
                     actions = {
-                        // Выбор модели как вкладка/кнопка
                         IconButton(onClick = { vm.openModelPicker() }) {
-                            Icon(Icons.Rounded.ArrowDropDown, contentDescription = "Выбор модели")
+                            Icon(Icons.Rounded.ArrowDropDown, contentDescription = "Модель")
                         }
                         IconButton(onClick = { vm.newChat() }) {
                             Icon(Icons.Rounded.Add, contentDescription = "Новый чат")
@@ -271,7 +374,7 @@ private fun EmptyState(vm: ChatViewModel) {
         Text("Напиши первое сообщение", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Бесплатно · Без ключа · Material You",
+            "Бесплатно · Без ключа · Аккаунт для сохранения",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -704,7 +807,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 Column {
                     Text("LotiChat", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "Нативное приложение",
+                        if (vm.isLoggedIn) "Аккаунт: ${vm.settings.accountUser}" else "Без аккаунта",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -758,13 +861,22 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 onClick = { close(); vm.openSettings() },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             )
+            if (vm.isLoggedIn) {
+                NavigationDrawerItem(
+                    label = { Text("Выйти из аккаунта") },
+                    icon = { Icon(Icons.Rounded.ExitToApp, null) },
+                    selected = false,
+                    onClick = { vm.logoutAccount(); close() },
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                )
+            }
             NavigationDrawerItem(
                 label = { Text("О приложении") },
                 icon = { Icon(Icons.Rounded.Info, null) },
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.2")
+                    vm.showToast("LotiChat 2.4 · Вход через аккаунт")
                 },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             )
