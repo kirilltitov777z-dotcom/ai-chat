@@ -66,10 +66,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         showModelPicker = true
     }
 
-    fun closeModelPicker() {
-        showModelPicker = false
-    }
-
     var screen by mutableStateOf("chat")
         private set
 
