@@ -6,7 +6,6 @@ const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный 
 
 const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_GROQ = "groq"
-const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_CUSTOM = "custom"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки
@@ -38,7 +37,7 @@ val GROQ_PRESETS = listOf(
     "mixtral-8x7b-32768"
 )
 
-// Демо-модели, которые работают вообще без ключа (встроенный ответчик)
+// Демо-модели — динамические ответы без ключа (не заготовки, а генерация на лету)
 val BUILTIN_FREE_MODELS = listOf(
     "demo:claude",
     "demo:gpt",
