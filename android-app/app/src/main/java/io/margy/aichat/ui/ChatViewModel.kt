@@ -506,11 +506,4 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 "Понял вас: «$text». Я Loki, ваш ассистент. Отвечаю на базе бесплатных моделей. Для более умных ответов проверьте API-ключ в Настройках."
         }
     }
-
-    // ------------------------------------------------------------------
-
-    private fun titleFrom(text: String, atts: List<Attachment>): String {
-        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
-        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
-    }
 }

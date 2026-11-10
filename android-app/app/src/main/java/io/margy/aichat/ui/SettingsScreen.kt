@@ -6,12 +6,15 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -22,6 +25,8 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.*
+import androidx.compose.material3.Tab
+import androidx.compose.material3.Tabs
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,7 +48,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun set(new: AppSettings) {
+    fun saveSettings(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
@@ -117,7 +122,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
 @Composable
 private fun TabMain(
     s: AppSettings,
-    set: (AppSettings) -> Unit,
+    onUpdate: (AppSettings) -> Unit,
     keyVisible: Boolean,
     context: Context,
     vm: ChatViewModel
@@ -138,7 +143,7 @@ private fun TabMain(
             ).forEach { (value, label) ->
                 FilterChip(
                     selected = s.themeMode == value,
-                    onClick = { set(s.copy(themeMode = value)) },
+                    onClick = { saveSettings(s.copy(themeMode = value)) },
                     label = { Text(label) }
                 )
             }
@@ -154,7 +159,7 @@ private fun TabMain(
                     Modifier
                         .size(36.dp)
                         .background(color, CircleShape)
-                        .clickable { set(s.copy(accent = index, dynamicColor = false)) },
+                        .clickable { saveSettings(s.copy(accent = index, dynamicColor = false)) },
                     contentAlignment = Alignment.Center
                 ) {
                     if (s.accent == index) {
@@ -168,7 +173,7 @@ private fun TabMain(
             title = "Цвета системы",
             subtitle = "Подхватить палитру с обоев телефона",
             checked = s.dynamicColor,
-            onChange = { set(s.copy(dynamicColor = it)) }
+            onChange = { saveSettings(s.copy(dynamicColor = it)) }
         )
     }
 }
@@ -176,7 +181,7 @@ private fun TabMain(
 @Composable
 private fun TabModel(
     s: AppSettings,
-    set: (AppSettings) -> Unit,
+    onUpdate: (AppSettings) -> Unit,
     keyVisible: Boolean,
     context: Context,
     vm: ChatViewModel
@@ -199,7 +204,7 @@ private fun TabModel(
                     onClick = {
                         if (s.provider != value) {
                             val next = s.copy(provider = value)
-                            set(next.copy(model = next.defaultModel()))
+                            saveSettings(next.copy(model = next.defaultModel()))
                         }
                     },
                     label = { Text(label) }
@@ -209,7 +214,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.apiKey,
-            onValueChange = { set(s.copy(apiKey = it.trim())) },
+            onValueChange = { saveSettings(s.copy(apiKey = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API-ключ") },
             singleLine = true,
@@ -227,7 +232,7 @@ private fun TabModel(
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
                 value = s.baseUrl,
-                onValueChange = { set(s.copy(baseUrl = it.trim())) },
+                onValueChange = { saveSettings(s.copy(baseUrl = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Адрес сервера") },
                 placeholder = { Text("http://192.168.1.10:1234/v1") },
@@ -237,7 +242,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.model,
-            onValueChange = { set(s.copy(model = it.trim())) },
+            onValueChange = { saveSettings(s.copy(model = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Модель") },
             singleLine = true
@@ -256,7 +261,7 @@ private fun TabModel(
                 presets.forEach { id ->
                     AssistChip(
                         selected = s.model == id,
-                        onClick = { set(s.copy(model = id)) },
+                        onClick = { saveSettings(s.copy(model = id)) },
                         label = { Text(id.substringAfterLast('/'), maxLines = 1) }
                     )
                 }
@@ -294,7 +299,7 @@ private fun TabModel(
 }
 
 @Composable
-private fun TabAccount(vm: ChatViewModel, set: (AppSettings) -> Unit) {
+private fun TabAccount(vm: ChatViewModel, onUpdate: (AppSettings) -> Unit) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
