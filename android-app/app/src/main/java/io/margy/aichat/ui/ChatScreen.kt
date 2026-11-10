@@ -78,7 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
-import io.margy.aichat.data.BUILTIN_FREE_MODELS
+import io.margy.aichat.data.MODEL_PRESETS
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.util.Media
@@ -906,7 +906,7 @@ private fun ImagePreviewDialog(path: String, onClose: () -> Unit) {
 
 @Composable
 private fun ModelPickerDialog(vm: ChatViewModel) {
-    val all = if (vm.settings.isDemo()) BUILTIN_FREE_MODELS else (vm.models.ifEmpty { BUILTIN_FREE_MODELS })
+    val all = vm.models.ifEmpty { MODEL_PRESETS }
     var query by remember { mutableStateOf("") }
     val filtered = remember(all, query) {
         if (query.isBlank()) all else all.filter { it.contains(query.trim(), ignoreCase = true) }

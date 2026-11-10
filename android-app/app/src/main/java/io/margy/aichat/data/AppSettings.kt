@@ -44,12 +44,7 @@ data class AppSettings(
     val accountPass: String = "",
     val accountLoggedIn: Boolean = false
 ) {
-    fun defaultModel(): String = when (provider) {
-        PROVIDER_DEEPSEEK -> DEFAULT_DEEPSEEK_MODEL
-        PROVIDER_CUSTOM -> ""
-        PROVIDER_DEMO -> DEFAULT_MODEL
-        else -> DEFAULT_MODEL
-    }
+    fun defaultModel(): String = DEFAULT_MODEL
 
     fun isDemo(): Boolean = provider == PROVIDER_DEMO
 }
