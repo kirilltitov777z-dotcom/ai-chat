@@ -35,9 +35,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (Build.VERSION.SDK_INT >= 29) {
-            setTheme(android.R.style.Theme_DeviceDefault_DayNight_NoActionBar);
-        }
         applyStatusBar();
 
         web = new WebView(this);
