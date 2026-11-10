@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -108,7 +109,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 0 -> TabMain(s, ::saveSettings, keyVisible, context, vm)
                 1 -> TabModel(s, ::saveSettings, keyVisible, context, vm)
                 2 -> TabAccount(vm, ::saveSettings)
-                3 -> TabAbout(vm)
+                3 -> TabAbout(vm, context)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -200,6 +201,7 @@ private fun TabModel(
     context: Context,
     vm: ChatViewModel
 ) {
+    var keyVisibleLocal by remember { mutableStateOf(keyVisible) }
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -232,7 +234,7 @@ private fun TabModel(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API-ключ") },
             singleLine = true,
-            visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { keyVisible = !keyVisible }) {
                     Icon(
@@ -274,7 +276,6 @@ private fun TabModel(
             ) {
                 presets.forEach { id ->
                     AssistChip(
-                        selected = s.model == id,
                         onClick = { onUpdate(s.copy(model = id)) },
                         label = { Text(id.substringAfterLast('/'), maxLines = 1) }
                     )
@@ -382,7 +383,7 @@ private fun TabAccount(vm: ChatViewModel, onUpdate: (AppSettings) -> Unit) {
 }
 
 @Composable
-private fun TabAbout(vm: ChatViewModel) {
+private fun TabAbout(vm: ChatViewModel, context: Context) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
