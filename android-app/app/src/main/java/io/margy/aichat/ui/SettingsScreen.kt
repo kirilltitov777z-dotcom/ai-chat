@@ -72,7 +72,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Section("Подключение") {
                 Text(
@@ -85,8 +85,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     listOf(
-                        PROVIDER_OPENROUTER to "OpenRouter",
-                        PROVIDER_DEEPSEEK to "DeepSeek",
+                        PROVIDER_OPENROUTER to "OpenRouter (Loki)",
                         PROVIDER_CUSTOM to "Свой сервер"
                     ).forEach { (value, label) ->
                         FilterChip(
@@ -121,9 +120,8 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
 
                 Text(
                     when (s.provider) {
-                        PROVIDER_DEEPSEEK -> "Официальный API DeepSeek — очень дешёвый. Ключ: platform.deepseek.com"
                         PROVIDER_CUSTOM -> "Свой сервер: LM Studio, Ollama, vLLM. Адрес вида http://192.168.1.10:1234/v1"
-                        else -> "Ключ бесплатный: openrouter.ai → Keys → Create Key. Бесплатные модели помечены :free"
+                        else -> "Ключ уже встроен. Модель: Loki. Бесплатные модели помечены :free"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -171,7 +169,6 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 )
 
                 val presets = when (s.provider) {
-                    PROVIDER_DEEPSEEK -> DEEPSEEK_PRESETS
                     PROVIDER_CUSTOM -> emptyList()
                     else -> MODEL_PRESETS
                 }
@@ -415,7 +412,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
 
 @Composable
 private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             title,
             style = MaterialTheme.typography.titleSmall,
@@ -424,11 +421,11 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
         )
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(20.dp)
         ) {
             Column(
-                Modifier.fillMaxWidth().padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                Modifier.fillMaxWidth().padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 content = content
             )
         }

@@ -216,18 +216,12 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 
 private fun modelLabel(vm: ChatViewModel): String {
     val s = vm.settings
-    val provider = when (s.provider) {
-        "deepseek" -> "DeepSeek"
-        "custom" -> "Свой сервер"
-        "demo" -> "Бесплатно (без ключа)"
-        else -> "OpenRouter"
-    }
-    val model = s.model.ifBlank { s.defaultModel() }.substringAfterLast('/')
+    val model = s.model.ifBlank { s.defaultModel() }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
     if (vm.searchEnabled) extras.add("поиск")
     return buildString {
-        append(provider).append(" · ").append(model)
+        append("Loki · ").append(model)
         if (extras.isNotEmpty()) append(" · ").append(extras.joinToString(", "))
     }
 }
@@ -353,33 +347,33 @@ private fun EmptyState(vm: ChatViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(32.dp),
+            .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(40.dp))
+        Spacer(Modifier.height(30.dp))
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(96.dp)
+            modifier = Modifier.size(80.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Rounded.Chat,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
         Text("Напиши первое сообщение", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
-            "Бесплатно · Без ключа · Аккаунт для сохранения",
+            "Loki · Бесплатно · Без ключа",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }
 
@@ -408,19 +402,19 @@ private fun MessageRow(
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 3.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 2.dp),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
     ) {
         Box {
             Surface(
-                shape = if (isUser) RoundedCornerShape(24.dp, 24.dp, 8.dp, 24.dp)
-                else RoundedCornerShape(24.dp, 24.dp, 24.dp, 8.dp),
+                shape = if (isUser) RoundedCornerShape(20.dp, 20.dp, 6.dp, 20.dp)
+                else RoundedCornerShape(20.dp, 20.dp, 20.dp, 6.dp),
                 color = bg,
                 modifier = Modifier
-                    .widthIn(max = 350.dp)
+                    .widthIn(max = 320.dp)
                     .combinedClickable(onClick = {}, onLongClick = { menu = true })
             ) {
-                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
                     if (msg.attachments.isNotEmpty()) {
                         AttachmentsRow(msg.attachments, onImage)
                         Spacer(Modifier.height(6.dp))
@@ -676,10 +670,10 @@ private fun Composer(vm: ChatViewModel) {
                 BasicTextField(
                     value = vm.draft,
                     onValueChange = { vm.draft = it },
-                    modifier = Modifier.weight(1f).padding(horizontal = 6.dp, vertical = 12.dp),
+                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp, vertical = 10.dp),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    maxLines = 6,
+                    maxLines = 5,
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth()) {
                             if (vm.draft.isEmpty()) {
@@ -700,7 +694,7 @@ private fun Composer(vm: ChatViewModel) {
 
                 FilledIconButton(
                     onClick = { vm.send() },
-                    modifier = Modifier.size(46.dp),
+                    modifier = Modifier.size(44.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = if (vm.busy) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         contentColor = if (vm.busy) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
@@ -709,7 +703,7 @@ private fun Composer(vm: ChatViewModel) {
                     Icon(
                         if (vm.busy) Icons.Rounded.Stop else Icons.Rounded.ArrowUpward,
                         contentDescription = if (vm.busy) "Стоп" else "Отправить",
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -726,13 +720,13 @@ private fun MiniToggle(
 ) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(38.dp),
+        modifier = Modifier.size(34.dp),
         colors = IconButtonDefaults.iconButtonColors(
             containerColor = if (on) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
             contentColor = if (on) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
-        Icon(icon, contentDescription = description, modifier = Modifier.size(20.dp))
+        Icon(icon, contentDescription = description, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -788,23 +782,23 @@ private fun PendingChip(att: Attachment, onRemove: () -> Unit) {
 private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
     ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(Modifier.fillMaxHeight()) {
-            Spacer(Modifier.height(28.dp))
-            Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.height(20.dp))
+            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.size(44.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             Icons.Rounded.Chat,
                             null,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(22.dp),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
-                Spacer(Modifier.width(12.dp))
+                Spacer(Modifier.width(10.dp))
                 Column {
                     Text("LotiChat", style = MaterialTheme.typography.titleLarge)
                     Text(
@@ -814,15 +808,15 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             NavigationDrawerItem(
                 label = { Text("Новый чат") },
                 icon = { Icon(Icons.Rounded.Add, null) },
                 selected = false,
                 onClick = { vm.newChat(); close() },
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
-            HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 10.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
             LazyColumn(Modifier.weight(1f)) {
                 items(vm.chats, key = { it.id }) { chat ->
                     NavigationDrawerItem(
@@ -846,21 +840,21 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                         selected = chat.id == vm.currentId,
                         onClick = { vm.selectChat(chat.id); close() },
                         badge = {
-                            IconButton(onClick = { vm.deleteChat(chat.id) }, modifier = Modifier.size(28.dp)) {
-                                Icon(Icons.Rounded.DeleteOutline, "Удалить", Modifier.size(18.dp))
+                            IconButton(onClick = { vm.deleteChat(chat.id) }, modifier = Modifier.size(26.dp)) {
+                                Icon(Icons.Rounded.DeleteOutline, "Удалить", Modifier.size(16.dp))
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 12.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp)
                     )
                 }
             }
-            HorizontalDivider(Modifier.padding(horizontal = 24.dp, vertical = 6.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
             NavigationDrawerItem(
                 label = { Text("Настройки") },
                 icon = { Icon(Icons.Rounded.Settings, null) },
                 selected = false,
                 onClick = { close(); vm.openSettings() },
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
             )
             if (vm.isLoggedIn) {
                 NavigationDrawerItem(
@@ -868,7 +862,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                     icon = { Icon(Icons.Rounded.ExitToApp, null) },
                     selected = false,
                     onClick = { vm.logoutAccount(); close() },
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
                 )
             }
             NavigationDrawerItem(
@@ -877,11 +871,11 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.4 · Вход через аккаунт")
+                    vm.showToast("LotiChat 2.6 · Loki")
                 },
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
             )
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(16.dp))
         }
     }
 }
