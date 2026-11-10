@@ -80,6 +80,7 @@ import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
 import io.margy.aichat.data.GROQ_PRESETS
 import io.margy.aichat.data.POLLINATIONS_PRESETS
+import io.margy.aichat.data.modelDescription
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.util.Media
@@ -216,12 +217,14 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 }
 
 private fun modelLabel(vm: ChatViewModel): String {
-    val model = vm.settings.model.ifBlank { "Loki" }
+    val model = vm.settings.model.ifBlank { "openai" }
+        .substringAfterLast('/')
+        .removePrefix("demo:")
     val provider = when (vm.settings.provider) {
         "groq" -> "Groq"
         "openrouter" -> "OpenRouter"
-        "custom" -> "Свой сервер"
-        else -> "Loki"
+        "custom" -> "Свой"
+        else -> "Бесплатно"
     }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
@@ -271,14 +274,31 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                 TopAppBar(
                     title = {
                         Column {
-                            Text("LotiChat", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                             Text(
-                                if (vm.isLoggedIn) "Аккаунт: ${vm.settings.accountUser}" else "Без аккаунта",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                "Loki",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
                             )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    modelLabel(vm),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.clickable { vm.openModelPicker() }
+                                )
+                                val desc = modelDescription(vm.settings.model)
+                                if (desc.isNotBlank()) {
+                                    Text(
+                                        " · $desc",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                            }
                         }
                     },
                     navigationIcon = {
@@ -356,29 +376,60 @@ private fun EmptyState(vm: ChatViewModel) {
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(30.dp))
+        Spacer(Modifier.height(48.dp))
+        // Логотип-атом в приложении
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.size(88.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Rounded.Chat,
                     contentDescription = null,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(44.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
-        Spacer(Modifier.height(16.dp))
-        Text("Напишите первое сообщение", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(20.dp))
+        Text("Привет!", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Loki · Бесплатно · Без ключа",
+            "Это Loki — бесплатный ИИ-ассистент. Работает без ключа и без регистрации.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+        Spacer(Modifier.height(24.dp))
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Column(
+                Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Модель: ${vm.settings.model.substringAfterLast('/')}",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                val desc = modelDescription(vm.settings.model)
+                if (desc.isNotBlank()) {
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        desc,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "Напишите сообщение — и поехали",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -949,20 +1000,31 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                             Modifier
                                 .fillMaxWidth()
                                 .clickable { vm.chooseModel(id) }
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(Modifier.weight(1f)) {
-                                Text(id, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                if (id == "demo:claude" || id == "demo:gpt" || id == "demo:deepseek") {
+                                Text(
+                                    id.substringAfterLast('/'),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                // Мелкий текст: что это за модель
+                                val desc = modelDescription(id)
+                                if (desc.isNotBlank()) {
                                     Text(
-                                        "бесплатно, без ключа",
+                                        desc,
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
-                                } else if (id.endsWith(":free")) {
+                                }
+                                // Пометка бесплатности
+                                if (id.startsWith("demo:") || id.endsWith(":free") ||
+                                    vm.settings.provider == "pollinations"
+                                ) {
                                     Text(
-                                        "бесплатно (:free)",
+                                        "бесплатно",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
@@ -972,7 +1034,7 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                                 Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
                             }
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     }
                 }
             }

@@ -3,43 +3,59 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- центральное ядро -->
-    <path
-        android:fillColor="#B9D4FF"
-        android:pathData="M54,44c5.5,0 10,4.5 10,10s-4.5,10 -10,10 -10,-4.5 -10,-10 4.5,-10 10,-10z" />
+    <!--
+        Атом: ядро + 3 эллиптические орбиты + электроны.
+        Всё умещается в безопасную зону adaptive-иконки (центр 108x108,
+        видимая маска ~72x72, безопасный круг ~66x66).
+    -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.82"
+        android:scaleY="0.82">
+        <!-- свечение ядра -->
+        <path
+            android:fillColor="#3380B4FF"
+            android:pathData="M54,38c9.4,0 17,7.6 17,17s-7.6,17 -17,17 -17,-7.6 -17,-17 7.6,-17 17,-17z" />
 
-    <!-- орбита 1 (горизонтальная эллиптическая) -->
-    <path
-        android:strokeColor="#CFE2FF"
-        android:strokeWidth="3.4"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M54,54m-34,0a34,13.5 0,1 0,68 0a34,13.5 0,1 0,-68 0" />
+        <!-- ядро -->
+        <path
+            android:fillColor="#CFE3FF"
+            android:pathData="M54,44c5.5,0 10,4.5 10,10s-4.5,10 -10,10 -10,-4.5 -10,-10 4.5,-10 10,-10z" />
 
-    <!-- орбита 2 (наклонная) -->
-    <path
-        android:strokeColor="#A9C8F5"
-        android:strokeWidth="3.4"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M54,54m-27,-19.5a27,27 0,1 0,54 0a27,27 0,1 0,-54 0" />
+        <!-- орбита 1 — горизонтальная эллиптическая -->
+        <path
+            android:strokeColor="#D6E7FF"
+            android:strokeWidth="3.6"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000"
+            android:pathData="M54,54m-34,0a34,13.5 0,1 0,68 0a34,13.5 0,1 0,-68 0" />
 
-    <!-- орбита 3 (наклонная в другую сторону) -->
-    <path
-        android:strokeColor="#8FB6EE"
-        android:strokeWidth="3.4"
-        android:strokeLineCap="round"
-        android:fillColor="#00000000"
-        android:pathData="M54,54m-27,19.5a27,27 0,1 0,54 0a27,27 0,1 0,-54 0" />
+        <!-- орбита 2 — наклонная -->
+        <path
+            android:strokeColor="#AECBF7"
+            android:strokeWidth="3.6"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000"
+            android:pathData="M54,54m-27,-19.5a27,27 0,1 0,54 0a27,27 0,1 0,-54 0" />
 
-    <!-- электроны на орбитах -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M88,54c-2.6,0 -4.7,-2.1 -4.7,-4.7s2.1,-4.7 4.7,-4.7 4.7,2.1 4.7,4.7 -2.1,4.7 -4.7,4.7z" />
-    <path
-        android:fillColor="#DCE9FF"
-        android:pathData="M73,24c-2.2,0 -4,-1.8 -4,-4s1.8,-4 4,-4 4,1.8 4,4 -1.8,4 -4,4z" />
-    <path
-        android:fillColor="#B9D4FF"
-        android:pathData="M35,84c-2.2,0 -4,-1.8 -4,-4s1.8,-4 4,-4 4,1.8 4,4 -1.8,4 -4,4z" />
+        <!-- орбита 3 — наклонная в другую сторону -->
+        <path
+            android:strokeColor="#8FB6EE"
+            android:strokeWidth="3.6"
+            android:strokeLineCap="round"
+            android:fillColor="#00000000"
+            android:pathData="M54,54m-27,19.5a27,27 0,1 0,54 0a27,27 0,1 0,-54 0" />
+
+        <!-- электроны -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M88,54c-3,0 -5.4,-2.4 -5.4,-5.4s2.4,-5.4 5.4,-5.4 5.4,2.4 5.4,5.4 -2.4,5.4 -5.4,5.4z" />
+        <path
+            android:fillColor="#E4EEFF"
+            android:pathData="M73,24c-2.6,0 -4.7,-2.1 -4.7,-4.7s2.1,-4.7 4.7,-4.7 4.7,2.1 4.7,4.7 -2.1,4.7 -4.7,4.7z" />
+        <path
+            android:fillColor="#C6DCFF"
+            android:pathData="M35,84c-2.6,0 -4.7,-2.1 -4.7,-4.7s2.1,-4.7 4.7,-4.7 4.7,2.1 4.7,4.7 -2.1,4.7 -4.7,4.7z" />
+    </group>
 </vector>

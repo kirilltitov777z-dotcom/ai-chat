@@ -17,6 +17,7 @@ object WebSearch {
     private val client = OkHttpClient.Builder()
         .connectTimeout(12, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
+        .dns(io.margy.aichat.util.Net.dns)
         .build()
 
     private fun enc(s: String): String = URLEncoder.encode(s, "UTF-8")

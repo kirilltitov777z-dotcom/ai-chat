@@ -290,15 +290,46 @@ private fun TabModel(
         }
         if (presets.isNotEmpty()) {
             Text("Готовые модели", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 presets.forEach { id ->
-                    AssistChip(
-                        onClick = { onUpdate(s.copy(model = id)) },
-                        label = { Text(id.substringAfterLast('/'), maxLines = 1) }
-                    )
+                    val isActive = s.model == id
+                    val desc = modelDescription(id)
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                if (isActive) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceContainerLow,
+                                RoundedCornerShape(14.dp)
+                            )
+                            .clickable { onUpdate(s.copy(model = id)) }
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                id,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1
+                            )
+                            if (desc.isNotBlank()) {
+                                Text(
+                                    desc,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isActive) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        if (isActive) {
+                            Icon(
+                                Icons.Rounded.Check,
+                                null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -307,16 +338,30 @@ private fun TabModel(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(
-                onClick = { vm.checkKey() },
-                enabled = !vm.checkingKey,
-                modifier = Modifier.weight(1f)
-            ) {
-                if (vm.checkingKey) {
-                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                    Spacer(Modifier.width(8.dp))
+            if (s.provider == PROVIDER_POLLINATIONS) {
+                Button(
+                    onClick = { vm.checkConnection() },
+                    enabled = !vm.checkingKey,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (vm.checkingKey) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Проверить связь")
                 }
-                Text("Проверить ключ")
+            } else {
+                Button(
+                    onClick = { vm.checkKey() },
+                    enabled = !vm.checkingKey,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (vm.checkingKey) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Проверить ключ")
+                }
             }
             TextButton(
                 onClick = {

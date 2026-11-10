@@ -33,6 +33,7 @@ object ChatApi {
         .writeTimeout(0, TimeUnit.MILLISECONDS)
         .callTimeout(0, TimeUnit.MILLISECONDS)
         .retryOnConnectionFailure(true)
+        .dns(io.margy.aichat.util.Net.dns)
         .build()
 
     data class Endpoint(val url: String, val key: String, val headers: Map<String, String>)
@@ -213,6 +214,8 @@ object ChatApi {
                     parseWhole(b.string(), onDelta, onReasoning)
                 }
             }
+        } catch (e: java.net.UnknownHostException) {
+            throw ApiException(0, "Не удалось найти сервер. Проверь интернет или отключи Private DNS в настройках телефона.")
         } finally {
             handle?.dispose()
         }

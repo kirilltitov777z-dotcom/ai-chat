@@ -19,6 +19,8 @@ import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
 import io.margy.aichat.util.Media
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -257,6 +259,52 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             }.onFailure {
                 toastMessage = it.message ?: "Не удалось проверить ключ"
             }
+        }
+    }
+
+    /// Проверка реальной связи с сервером (тест DNS + сеть + ответ модели)
+    fun checkConnection() {
+        if (checkingKey) return
+        viewModelScope.launch {
+            checkingKey = true
+            toastMessage = "Проверяю связь…"
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val ep = ChatApi.endpoint(settings)
+                    val body = org.json.JSONObject().apply {
+                        put("model", settings.model.ifBlank { "openai" })
+                        put("messages", org.json.JSONArray().apply {
+                            put(org.json.JSONObject().put("role", "user").put("content", "ping"))
+                        })
+                        put("stream", false)
+                        put("max_tokens", 8)
+                    }
+                    val req = okhttp3.Request.Builder()
+                        .url(ep.url)
+                        .header("Content-Type", "application/json")
+                        .apply { if (ep.key.isNotBlank()) header("Authorization", "Bearer ${ep.key}") }
+                        .post(body.toString().toRequestBody(
+                            okhttp3.MediaType.Companion.toMediaType("application/json")
+                        ))                        .build()
+                    val resp = ChatApi.http.newCall(req).execute()
+                    resp.use {
+                        val txt = it.body?.string().orEmpty()
+                        if (!it.isSuccessful) {
+                            "Ошибка ${it.code}: " + txt.take(120)
+                        } else {
+                            "Связь работает! Ответ: " +
+                                runCatching {
+                                    org.json.JSONObject(txt)
+                                        .optJSONArray("choices")?.optJSONObject(0)
+                                        ?.optJSONObject("message")?.optString("content")
+                                        ?.take(60)
+                                }.getOrNull().orEmpty()
+                        }
+                    }
+                }.getOrElse { "Нет связи: ${it.message}" }
+            }
+            checkingKey = false
+            toastMessage = result
         }
     }
 
