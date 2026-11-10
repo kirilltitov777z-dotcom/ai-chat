@@ -90,7 +90,7 @@ object Net {
             if (!fb.isNullOrEmpty()) return fb
 
             // 4) Хоть что-то из системного (даже IPv6)
-            if (system.isNotEmpty()) return system
+            if (system.isNotEmpty()) return system.toList()
 
             throw java.net.UnknownHostException("Не удалось найти адрес: $hostname")
         }
