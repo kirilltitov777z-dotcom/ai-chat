@@ -6,6 +6,7 @@ import io.margy.aichat.data.PROVIDER_CUSTOM
 import io.margy.aichat.data.PROVIDER_DEEPSEEK
 import io.margy.aichat.data.PROVIDER_GROQ
 import io.margy.aichat.data.PROVIDER_OPENROUTER
+import io.margy.aichat.data.PROVIDER_POLLINATIONS
 import io.margy.aichat.data.Role
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,6 +38,12 @@ object ChatApi {
     data class Endpoint(val url: String, val key: String, val headers: Map<String, String>)
 
     fun endpoint(s: AppSettings): Endpoint = when (s.provider) {
+        // Pollinations — бесплатно, без ключа
+        PROVIDER_POLLINATIONS -> Endpoint(
+            "https://text.pollinations.ai/openai/chat/completions",
+            "",
+            emptyMap()
+        )
         PROVIDER_GROQ -> Endpoint("https://api.groq.com/openai/v1/chat/completions", s.apiKey, emptyMap())
         PROVIDER_OPENROUTER -> Endpoint(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -166,15 +173,19 @@ object ChatApi {
     ) = withContext(Dispatchers.IO) {
         val ep = endpoint(settings)
         if (ep.url.isBlank()) throw ApiException(0, "Не указан адрес сервера в настройках")
-        if (ep.key.isBlank()) throw ApiException(0, "Не указан API-ключ — открой настройки")
+        if (ep.key.isBlank() && settings.provider != PROVIDER_POLLINATIONS) {
+            throw ApiException(0, "Не указан API-ключ — открой настройки")
+        }
 
         val body = requestBody(settings, model, history, searchContext, thinking, withImages).toString()
         val req = Request.Builder()
             .url(ep.url)
-            .header("Authorization", "Bearer ${ep.key}")
             .header("Content-Type", "application/json")
             .header("Accept", "text/event-stream")
-            .apply { ep.headers.forEach { (k, v) -> header(k, v) } }
+            .apply {
+                if (ep.key.isNotBlank()) header("Authorization", "Bearer ${ep.key}")
+                ep.headers.forEach { (k, v) -> header(k, v) }
+            }
             .post(body.toRequestBody(JSON))
             .build()
 
@@ -237,6 +248,15 @@ object ChatApi {
     }
 
     private fun parseError(raw: String, code: Int): String {
+        // Ошибка лимита Pollinations: подсказываем сколько ждать
+        if (raw.contains("FREE_LIMIT", true)) {
+            val wait = Regex("Retry after (\\d+)s").find(raw)?.groupValues?.get(1)?.toIntOrNull()
+            return if (wait != null) {
+                "Бесплатный лимит: 1 ответ в 45 сек. Подождите $wait сек и повторите."
+            } else {
+                "Бесплатный лимит: 1 ответ в 45 секунд. Подождите немного и повторите."
+            }
+        }
         val msg = runCatching {
             val o = JSONObject(raw)
             o.optJSONObject("error")?.optString("message")

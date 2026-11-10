@@ -7,6 +7,7 @@ const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный 
 const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_GROQ = "groq"
 const val PROVIDER_DEEPSEEK = "deepseek"
+const val PROVIDER_POLLINATIONS = "pollinations"
 const val PROVIDER_CUSTOM = "custom"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки
@@ -24,6 +25,19 @@ val GROQ_PRESETS = listOf(
     "mixtral-8x7b-32768"
 )
 
+// Бесплатные модели Pollinations (БЕЗ ключа вообще)
+val POLLINATIONS_PRESETS = listOf(
+    "openai",
+    "openai-fast",
+    "openai-large",
+    "gpt-oss-20b",
+    "gpt-oss-120b",
+    "mistral",
+    "llama-roblox",
+    "micronet",
+    "qwen-coder"
+)
+
 // Демо-модели — динамические ответы без ключа (не заготовки, а генерация на лету)
 val BUILTIN_FREE_MODELS = listOf(
     "demo:claude",
@@ -34,9 +48,9 @@ val BUILTIN_FREE_MODELS = listOf(
 const val DEV_MODE_PASSWORD = "Loti_Dev_2026!@#"
 
 data class AppSettings(
-    val provider: String = PROVIDER_GROQ,
-    val apiKey: String = DEFAULT_API_KEY,
-    val model: String = DEFAULT_MODEL,
+    val provider: String = PROVIDER_POLLINATIONS,
+    val apiKey: String = "",
+    val model: String = "openai",
     val baseUrl: String = "",
     val system: String = DEFAULT_SYSTEM,
     val temperature: Float = 0.7f,
@@ -51,6 +65,7 @@ data class AppSettings(
 ) {
     fun defaultModel(): String = when (provider) {
         PROVIDER_GROQ -> GROQ_PRESETS.first()
+        PROVIDER_POLLINATIONS -> "openai"
         else -> DEFAULT_MODEL
     }
 
@@ -61,9 +76,9 @@ class SettingsStore(context: Context) {
     private val sp = context.getSharedPreferences("lotichat_settings", Context.MODE_PRIVATE)
 
     fun load(): AppSettings = AppSettings(
-        provider = sp.getString("provider", PROVIDER_OPENROUTER) ?: PROVIDER_OPENROUTER,
-        apiKey = sp.getString("apiKey", DEFAULT_API_KEY).orEmpty(),
-        model = sp.getString("model", DEFAULT_MODEL).orEmpty(),
+        provider = sp.getString("provider", PROVIDER_POLLINATIONS) ?: PROVIDER_POLLINATIONS,
+        apiKey = sp.getString("apiKey", "").orEmpty(),
+        model = sp.getString("model", "openai").orEmpty(),
         baseUrl = sp.getString("baseUrl", "").orEmpty(),
         system = sp.getString("system", DEFAULT_SYSTEM) ?: DEFAULT_SYSTEM,
         temperature = sp.getFloat("temperature", 0.7f),

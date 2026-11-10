@@ -213,7 +213,9 @@ private fun TabModel(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf(
+                PROVIDER_POLLINATIONS to "Бесплатно (без ключа)",
                 PROVIDER_GROQ to "Groq",
+                PROVIDER_OPENROUTER to "OpenRouter",
                 PROVIDER_CUSTOM to "Свой сервер"
             ).forEach { (value, label) ->
                 FilterChip(
@@ -229,22 +231,37 @@ private fun TabModel(
             }
         }
 
-        OutlinedTextField(
-            value = s.apiKey,
-            onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("API-ключ") },
-            singleLine = true,
-            visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                IconButton(onClick = { keyVisibleLocal = !keyVisibleLocal }) {
-                    Icon(
-                        if (keyVisibleLocal) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        if (keyVisibleLocal) "Скрыть" else "Показать"
-                    )
+        if (s.provider != PROVIDER_POLLINATIONS) {
+            OutlinedTextField(
+                value = s.apiKey,
+                onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("API-ключ") },
+                singleLine = true,
+                visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    IconButton(onClick = { keyVisibleLocal = !keyVisibleLocal }) {
+                        Icon(
+                            if (keyVisibleLocal) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                            if (keyVisibleLocal) "Скрыть" else "Показать"
+                        )
+                    }
                 }
+            )
+        } else {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    "Работает сразу без ключа и без регистрации. Лимит — 1 ответ в 45 секунд на устройство.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(12.dp)
+                )
             }
-        )
+        }
 
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
@@ -267,6 +284,7 @@ private fun TabModel(
 
         val presets = when (s.provider) {
             PROVIDER_GROQ -> GROQ_PRESETS
+            PROVIDER_POLLINATIONS -> POLLINATIONS_PRESETS
             PROVIDER_CUSTOM -> emptyList()
             else -> emptyList()
         }

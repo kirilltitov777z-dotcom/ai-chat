@@ -91,7 +91,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         get() = settings.devMode
 
     val apiReady: Boolean
-        get() = settings.apiKey.isNotBlank()
+        get() = settings.provider == "pollinations" || settings.apiKey.isNotBlank()
 
     val isLoggedIn: Boolean
         get() = settings.accountLoggedIn && settings.accountUser.isNotBlank()
@@ -462,12 +462,22 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     attempt(true)
                 } catch (e: Exception) {
-                    // Если API не работает — показываем демо-ответ, чтобы хоть что-то было
-                    val userText = history.lastOrNull { it.role == Role.USER }?.text ?: ""
-                    val demoResp = demoReply(userText)
-                    delta = StringBuilder(demoResp)
-                    addDevLog("API error: ${e.message}. Demo used.")
-                    patchMessage(chatId, aiId) { it.copy(text = demoResp, streaming = true, status = null) }
+                    // Реальная ошибка вместо шаблона — пользователь должен видеть причину
+                    val errText = e.message?.take(300) ?: "Ошибка сети"
+                    addDevLog("API error: $errText")
+                    patchMessage(chatId, aiId) {
+                        it.copy(
+                            text = "",
+                            streaming = false,
+                            status = null,
+                            error = true,
+                            reasoning = ""
+                        )
+                    }
+                    // Текст ошибки показываем отдельным сообщением
+                    patchMessage(chatId, aiId) { m ->
+                        m.copy(text = "⚠️ $errText")
+                    }
                 }
 
                 patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
