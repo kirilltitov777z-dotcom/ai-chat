@@ -62,6 +62,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var showModelPicker by mutableStateOf(false)
         private set
 
+    fun openModelPicker() {
+        showModelPicker = true
+    }
+
+    fun closeModelPicker() {
+        showModelPicker = false
+    }
+
     var screen by mutableStateOf("chat")
         private set
 
@@ -325,8 +333,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun setStatus(chatId: String, msgId: String, status: String?) {
-        patchMessage(chatId, aiId = msgId) { it.copy(status = status) }
+    private fun setStatus(chatId: String, aiId: String, status: String?) {
+        patchMessage(chatId, aiId) { it.copy(status = status) }
     }
 
     private fun persistNow() {

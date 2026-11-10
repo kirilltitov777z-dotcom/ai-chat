@@ -347,9 +347,9 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                     Button(
                         onClick = {
                             if (vm.tryDevLogin(devPass)) {
-                                toastMessage = "Режим разработчика включён"
+                                vm.showToast("Режим разработчика включён")
                             } else {
-                                toastMessage = "Неверный пароль"
+                                vm.showToast("Неверный пароль")
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -454,61 +454,6 @@ private fun SettingSwitch(
         }
         Spacer(Modifier.width(12.dp))
         Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
-    }
-}
-
-@Composable
-fun ModelPickerDialog(vm: ChatViewModel) {
-    val all = vm.models
-    var query by remember { mutableStateOf("") }
-    val filtered = remember(all, query) {
-        if (query.isBlank()) all else all.filter { it.contains(query.trim(), ignoreCase = true) }
-    }
-
-    Dialog(onDismissRequest = { vm.closeModelPicker() }) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
-        ) {
-            Column(Modifier.padding(20.dp).heightIn(max = 560.dp)) {
-                Text("Модели · ${all.size}", style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Поиск") },
-                    singleLine = true
-                )
-                Spacer(Modifier.height(8.dp))
-                LazyColumn(Modifier.weight(1f, fill = false)) {
-                    items(filtered, key = { it }) { id ->
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { vm.chooseModel(id) }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(id, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                if (id.endsWith(":free")) {
-                                    Text(
-                                        "бесплатно",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-                            if (id == vm.settings.model) {
-                                Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
-                            }
-                        }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-                    }
-                }
-            }
-        }
     }
 }
 

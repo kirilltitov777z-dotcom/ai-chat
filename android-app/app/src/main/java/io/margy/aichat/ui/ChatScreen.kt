@@ -40,6 +40,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Chat
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.DeleteOutline
@@ -182,7 +183,7 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                     },
                     actions = {
                         // Выбор модели как вкладка/кнопка
-                        IconButton(onClick = { vm.showModelPicker = true }) {
+                        IconButton(onClick = { vm.openModelPicker() }) {
                             Icon(Icons.Rounded.ArrowDropDown, contentDescription = "Выбор модели")
                         }
                         IconButton(onClick = { vm.newChat() }) {
