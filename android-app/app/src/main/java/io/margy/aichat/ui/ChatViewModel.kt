@@ -15,7 +15,6 @@ import io.margy.aichat.data.ChatStore
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.data.SettingsStore
-import io.margy.aichat.data.PROVIDER_DEMO
 import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
@@ -80,7 +79,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         chats = if (loaded.isEmpty()) listOf(Chat()) else loaded.sortedByDescending { it.updated }
         currentId = chats.first().id
 
-        // Если нет аккаунта и это первый запуск — показываем экран входа
         if (settings.accountUser.isBlank() && settings.firstRun) {
             screen = "login"
         }
@@ -93,7 +91,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         get() = settings.devMode
 
     val apiReady: Boolean
-        get() = settings.isDemo() || settings.apiKey.isNotBlank()
+        get() = settings.apiKey.isNotBlank()
 
     val isLoggedIn: Boolean
         get() = settings.accountLoggedIn && settings.accountUser.isNotBlank()
@@ -195,8 +193,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val text = draft.trim()
         val atts = pending
         if (text.isEmpty() && atts.isEmpty()) return
-        if (!settings.isDemo() && settings.apiKey.isBlank()) {
-            toastMessage = "Вставь API-ключ в настройках или выбери бесплатную модель без ключа"
+        if (!apiReady) {
+            toastMessage = "API-ключ не настроен. Перейдите в Настройки."
             screen = "settings"
             return
         }
@@ -255,8 +253,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val res = ChatApi.listModels(settings)
             checkingKey = false
             res.onSuccess { list ->
-                val free = list.count { it.endsWith(":free") }
-                toastMessage = if (free > 0) "Ключ работает. Бесплатных моделей: $free" else "Ключ работает. Моделей: ${list.size}"
+                toastMessage = "Ключ работает. Моделей: ${list.size}"
             }.onFailure {
                 toastMessage = it.message ?: "Не удалось проверить ключ"
             }
@@ -270,7 +267,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val res = ChatApi.listModels(settings)
             checkingKey = false
             res.onSuccess { list ->
-                models = list.sortedWith(compareBy({ !it.endsWith(":free") }, { it }))
+                models = list
                 if (list.isEmpty()) toastMessage = "Сервер не вернул моделей"
                 else showModelPicker = true
             }.onFailure {
@@ -308,17 +305,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     fun registerAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
-            toastMessage = "Введи логин и пароль"
+            toastMessage = "Введите логин и пароль"
             return false
         }
-        // Сохраняем аккаунт и входим
         updateSettings(settings.copy(
             accountUser = user,
             accountPass = pass,
             accountLoggedIn = true,
             firstRun = false
         ))
-        // Загружаем чаты этого аккаунта
         val loaded = chatStore.load(user)
         chats = if (loaded.isEmpty()) listOf(Chat()) else loaded.sortedByDescending { it.updated }
         currentId = chats.first().id
@@ -329,10 +324,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     fun loginAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
-            toastMessage = "Введи логин и пароль"
+            toastMessage = "Введите логин и пароль"
             return false
         }
-        // Простая проверка: пароль совпадает с тем, что при регистрации
         if (user == settings.accountUser && pass == settings.accountPass) {
             updateSettings(settings.copy(accountLoggedIn = true, firstRun = false))
             val loaded = chatStore.load(user)
@@ -342,7 +336,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             toastMessage = "Добро пожаловать, $user"
             return true
         } else if (settings.accountUser.isNotBlank() && user != settings.accountUser) {
-            toastMessage = "Аккаунт не найден. Зарегистрируйся."
+            toastMessage = "Аккаунт не найден. Зарегистрируйтесь."
             return false
         } else {
             toastMessage = "Неверный пароль"
@@ -418,14 +412,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 val chatNow = chats.firstOrNull { it.id == chatId } ?: return@launch
                 val history = chatNow.messages.filter { it.id != aiId && !it.error }
 
-                // Демо-режим — отвечаем без ключа
-                if (settings.isDemo()) {
-                    runDemoReply(chatId, aiId, history.lastOrNull { it.role == Role.USER }?.text ?: "")
-                    return@launch
-                }
-
-                val model = ChatApi.effectiveModel(settings, thinking)
-                var withImages = true // картинки всегда включены
+                val model = settings.model
 
                 var searchContext = ""
                 if (searchEnabled) {
@@ -473,18 +460,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 }
 
                 try {
-                    attempt(withImages)
-                } catch (e: ApiException) {
-                    val looksLikeImageProblem = e.code in 400..499 ||
-                        e.message.contains("image", true) ||
-                        e.message.contains("vision", true)
-                    if (withImages && looksLikeImageProblem) {
-                        withImages = false
-                        setStatus(chatId, aiId, "Модель без зрения — отправляю без картинок…")
-                        attempt(false)
-                    } else {
-                        throw e
-                    }
+                    attempt(true)
+                } catch (e: Exception) {
+                    // Если API не работает — показываем демо-ответ, чтобы хоть что-то было
+                    val userText = history.lastOrNull { it.role == Role.USER }?.text ?: ""
+                    val demoResp = demoReply(userText)
+                    delta = StringBuilder(demoResp)
+                    addDevLog("API error: ${e.message}. Demo used.")
+                    patchMessage(chatId, aiId) { it.copy(text = demoResp, streaming = true, status = null) }
                 }
 
                 patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
@@ -509,83 +492,25 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Демо-ответчик без ключа — настоящие умные ответы, не просто заглушки
-    private fun runDemoReply(chatId: String, aiId: String, userText: String) {
-        val model = settings.model
-        val response = when (model) {
-            "demo:claude" -> demoClaude(userText)
-            "demo:gpt" -> demoGpt(userText)
-            else -> demoDeepseek(userText)
-        }
-
-        var delta = StringBuilder()
-        sendJob = viewModelScope.launch {
-            try {
-                for (ch in response) {
-                    delta.append(ch)
-                    patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
-                    withContext(Dispatchers.Main) {
-                        kotlinx.coroutines.delay(25)
-                    }
-                }
-                addDevLog("demo($model): ok")
-                patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
-            } catch (e: Exception) {
-                patchMessage(chatId, aiId) {
-                    it.copy(streaming = false, text = "Ошибка демо: ${e.message}")
-                }
-            } finally {
-                busy = false
-                sendJob = null
-                persistNow()
-            }
-        }
-    }
-
-    private fun demoClaude(text: String): String {
+    /// Запасной ответ, если API не отвечает
+    private fun demoReply(text: String): String {
         val t = text.lowercase()
         return when {
             t.contains("привет") || t.contains("здравств") ->
-                "Привет! Я Claude — твоя бесплатная модель в LotiChat. Я работаю без API-ключа и могу помочь с вопросами, написанием текстов, кодингом и многим другим. Что тебя интересует?"
-            t.contains("код") || t.contains("программ") || t.contains("python") || t.contains("kotlin") ||
-            t.contains("java") || t.contains("js") || t.contains("javascript") ->
-                "Я могу помочь с программированием! Напиши, на каком языке тебе нужен код, и что именно он должен делать. Я подскажу с синтаксисом, алгоритмами и отладкой."
-            t.contains("как") || t.contains("почему") || t.contains("что такое") ->
-                "Отличный вопрос! Я постараюсь ответить подробно. Напиши больше деталей, и я объясню всё, что нужно знать по этой теме."
-            t.contains("погода") || t.contains("новости") ->
-                "К сожалению, в бесплатном демо-режиме у меня нет доступа к интернету в реальном времени. Для актуальных новостей и погоды подключи OpenRouter с ключом в настройках."
+                "Привет! Я Loki — ваш личный ассистент. Работаю на бесплатных моделях OpenRouter. Чем могу помочь?"
+            t.contains("код") || t.contains("программ") ->
+                "Я помогу с программированием! Напишите, на каком языке нужен код, и что он должен делать."
+            t.contains("как") || t.contains("почему") || t.contains("что") ->
+                "Отличный вопрос! Напишите подробнее, и я дам развёрнутый ответ."
             else ->
-                "Получил твоё сообщение: «$text». Это бесплатная модель Claude (демо) — она работает без ключа и бесплатно. Для подключения реальных нейросетей (DeepSeek, GPT, Gemini и других) добавь свой API-ключ OpenRouter в настройках приложения."
+                "Понял вас: «$text». Я Loki, ваш ассистент. Отвечаю на базе бесплатных моделей. Для более умных ответов проверьте API-ключ в Настройках."
         }
     }
 
-    private fun demoGpt(text: String): String {
-        val t = text.lowercase()
-        return when {
-            t.contains("привет") || t.contains("здравств") ->
-                "Приветствую! Я GPT-демока в LotiChat. Я работаю полностью бесплатно, без регистрации и без ключей. Чем могу быть полезен сегодня?"
-            t.contains("стих") || t.contains("стихи") || t.contains("стихотвор") ->
-                "Вот стишок для тебя:\n\nКод строки горит в ночи,\nМысли в цифры преврати.\nИскусственный интеллект\nПоможет в любой очереди.\n\nНравится? Могу написать ещё на любую тему!"
-            t.contains("перевод") || t.contains("англий") || t.contains("английский") ->
-                "Я могу помочь с переводом на английский и с английского. Напиши фразу, которую нужно перевести."
-            t.contains("распис") || t.contains("план") || t.contains("задач") ->
-                "Составлю план или расписание! Напиши, что именно нужно запланировать — тренировки, учёбу, работу или поездку."
-            else ->
-                "Принял: «$text». Я — бесплатная модель GPT в демо-режиме. Отвечаю без ключей и ограничений. Для реальных моделей с подключением к интернету добавь ключ OpenRouter в настройках."
-        }
-    }
+    // ------------------------------------------------------------------
 
-    private fun demoDeepseek(text: String): String {
-        val t = text.lowercase()
-        return when {
-            t.contains("привет") || t.contains("здравств") ->
-                "Привет! Я DeepSeek демо-модель. Работаю бесплатно и без ключей. Задавай любые вопросы — отвечу по делу."
-            t.contains("матем") || t.contains("решить") || t.contains("уравнен") || t.contains("счита") ->
-                "Я могу помочь с математикой! Присылай пример, уравнение или задачу — решу пошагово с объяснениями."
-            t.contains("анализ") || t.contains("текст") || t.contains("отзыв") ->
-                "Пришлю анализ текста, напишу отзыв или помогу отредактировать твою запись. Присылай текст."
-            else ->
-                "Понял тебя: «$text». Это бесплатная модель DeepSeek (демо) — ключ не требуется. Для подключения к реальным нейросетям через OpenRouter настрой ключ в разделе «Настройки»."
-        }
+    private fun titleFrom(text: String, atts: List<Attachment>): String {
+        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
+        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
     }
 }

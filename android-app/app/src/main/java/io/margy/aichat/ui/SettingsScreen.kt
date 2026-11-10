@@ -5,18 +5,13 @@ package io.margy.aichat.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -33,9 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import io.margy.aichat.data.*
@@ -48,11 +41,14 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var s by remember { mutableStateOf(vm.settings) }
     var clearDialog by remember { mutableStateOf(false) }
     var keyVisible by remember { mutableStateOf(false) }
+    var selectedTab by remember { mutableStateOf(0) }
 
     fun set(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
+
+    val tabs = listOf("Основное", "Модель", "Аккаунт", "О приложении")
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -70,322 +66,30 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Section("Подключение") {
-                Text(
-                    "Сервис",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Row(
-                    Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        PROVIDER_OPENROUTER to "OpenRouter (Loki)",
-                        PROVIDER_CUSTOM to "Свой сервер"
-                    ).forEach { (value, label) ->
-                        FilterChip(
-                            selected = s.provider == value,
-                            onClick = {
-                                if (s.provider != value) {
-                                    val next = s.copy(provider = value)
-                                    set(next.copy(model = next.defaultModel()))
-                                }
-                            },
-                            label = { Text(label) }
-                        )
-                    }
-                }
-
-                OutlinedTextField(
-                    value = s.apiKey,
-                    onValueChange = { set(s.copy(apiKey = it.trim())) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("API-ключ") },
-                    singleLine = true,
-                    visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { keyVisible = !keyVisible }) {
-                            Icon(
-                                if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                                if (keyVisible) "Скрыть" else "Показать"
-                            )
-                        }
-                    }
-                )
-
-                Text(
-                    when (s.provider) {
-                        PROVIDER_CUSTOM -> "Свой сервер: LM Studio, Ollama, vLLM. Адрес вида http://192.168.1.10:1234/v1"
-                        else -> "Ключ уже встроен. Модель: Loki. Бесплатные модели помечены :free"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { vm.checkKey() }, enabled = !vm.checkingKey) {
-                        if (vm.checkingKey) {
-                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                            Spacer(Modifier.width(8.dp))
-                        }
-                        Text("Проверить ключ")
-                    }
-                    TextButton(onClick = {
-                        val url = when (s.provider) {
-                            PROVIDER_DEEPSEEK -> "https://platform.deepseek.com/api_keys"
-                            PROVIDER_CUSTOM -> "https://lmstudio.ai"
-                            else -> "https://openrouter.ai/keys"
-                        }
-                        openUrl(context, url)
-                    }) {
-                        Text("Получить ключ")
-                        Spacer(Modifier.width(4.dp))
-                        Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
-                    }
-                }
-
-                if (s.provider == PROVIDER_CUSTOM) {
-                    OutlinedTextField(
-                        value = s.baseUrl,
-                        onValueChange = { set(s.copy(baseUrl = it.trim())) },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Адрес сервера") },
-                        placeholder = { Text("http://192.168.1.10:1234/v1") },
-                        singleLine = true
+            // Вкладки
+            Tabs(
+                selectedTabIndex = selectedTab,
+                onTabSelected = { selectedTab = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = index == selectedTab,
+                        onClick = { selectedTab = index },
+                        text = { Text(title) }
                     )
                 }
-
-                OutlinedTextField(
-                    value = s.model,
-                    onValueChange = { set(s.copy(model = it.trim())) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Модель") },
-                    singleLine = true
-                )
-
-                val presets = when (s.provider) {
-                    PROVIDER_CUSTOM -> emptyList()
-                    else -> MODEL_PRESETS
-                }
-                if (presets.isNotEmpty()) {
-                    Row(
-                        Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        presets.forEach { id ->
-                            AssistChip(
-                                onClick = { set(s.copy(model = id)) },
-                                label = { Text(id.substringAfterLast('/'), maxLines = 1) }
-                            )
-                        }
-                    }
-                }
-
-                TextButton(onClick = { vm.fetchModels() }, enabled = !vm.checkingKey) {
-                    Icon(Icons.Rounded.Refresh, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Выбрать из списка сервера")
-                }
             }
+            Spacer(Modifier.height(12.dp))
 
-            Section("Характер") {
-                OutlinedTextField(
-                    value = s.system,
-                    onValueChange = { set(s.copy(system = it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Системный промпт") },
-                    minLines = 3,
-                    maxLines = 8
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Температура", style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.weight(1f))
-                    Text(
-                        String.format(Locale.US, "%.1f", s.temperature),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Slider(
-                    value = s.temperature,
-                    onValueChange = { set(s.copy(temperature = it)) },
-                    valueRange = 0f..1.5f
-                )
-                Text(
-                    "0 — строго и предсказуемо, 1.5 — смело и креативно",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Section("Оформление") {
-                SettingSwitch(
-                    title = "Цвета системы (Material You)",
-                    subtitle = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        "Палитра подхватывается с обоев и темы телефона"
-                    } else {
-                        "Доступно на Android 12 и новее"
-                    },
-                    checked = s.dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                ) { set(s.copy(dynamicColor = it)) }
-
-                Text("Тема", style = MaterialTheme.typography.labelLarge)
-                Row(
-                    Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    listOf(
-                        "system" to "Системная",
-                        "light" to "Светлая",
-                        "dark" to "Тёмная"
-                    ).forEach { (value, label) ->
-                        FilterChip(
-                            selected = s.themeMode == value,
-                            onClick = { set(s.copy(themeMode = value)) },
-                            label = { Text(label) }
-                        )
-                    }
-                }
-
-                Text("Акцент", style = MaterialTheme.typography.labelLarge)
-                Row(
-                    Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    ACCENTS.forEachIndexed { index, color ->
-                        Box(
-                            Modifier
-                                .size(42.dp)
-                                .background(color, CircleShape)
-                                .clickable { set(s.copy(accent = index, dynamicColor = false)) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (s.accent == index) {
-                                Icon(Icons.Rounded.Check, ACCENT_NAMES.getOrElse(index) { "" }, tint = Color.White)
-                            }
-                        }
-                    }
-                }
-                Text(
-                    "Акцент работает, когда цвета системы выключены или телефон младше Android 12",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Section("Вложения") {
-                Text(
-                    "Картинки и файлы всегда включены",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Section("Данные") {
-                TextButton(
-                    onClick = {
-                        val intent = Intent(Intent.ACTION_SEND)
-                            .setType("text/plain")
-                            .putExtra(Intent.EXTRA_TEXT, vm.exportJson())
-                        runCatching {
-                            context.startActivity(Intent.createChooser(intent, "Экспорт чатов"))
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Rounded.FileDownload, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Экспортировать чаты (JSON)", modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
-                }
-                TextButton(
-                    onClick = { clearDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Icon(Icons.Rounded.DeleteOutline, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Очистить все чаты", modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
-                }
-            }
-
-            Section("О приложении") {
-                Text("LotiChat 2.1", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    "Нативное приложение. " +
-                        "Без WebView и без внешних CDN — интерфейс не ломается.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Section("Режим разработчика") {
-                if (!vm.devMode) {
-                    Text(
-                        "Секретный режим службы поддержки. " +
-                            "Показывает технические логи работы приложения.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    var devPass by remember { mutableStateOf("") }
-                    OutlinedTextField(
-                        value = devPass,
-                        onValueChange = { devPass = it },
-                        label = { Text("Пароль разработчика") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
-                    )
-                    Button(
-                        onClick = {
-                            if (vm.tryDevLogin(devPass)) {
-                                vm.showToast("Режим разработчика включён")
-                            } else {
-                                vm.showToast("Неверный пароль")
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = MaterialTheme.colorScheme.onError
-                        )
-                    ) {
-                        Text("Войти в режим разработчика")
-                    }
-                } else {
-                    Text(
-                        "Режим разработчика активен. Логи последних сообщений:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    LazyColumn(
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 300.dp)
-                    ) {
-                        items(vm.devLogs.reversed(), key = { it }) { log ->
-                            Text(
-                                text = log,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            HorizontalDivider()
-                        }
-                    }
-                    Button(
-                        onClick = { vm.exitDevMode() },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    ) {
-                        Text("Выйти из режима разработчика")
-                    }
-                }
+            when (selectedTab) {
+                0 -> TabMain(s, set, keyVisible, context, vm)
+                1 -> TabModel(s, set, keyVisible, context, vm)
+                2 -> TabAccount(vm, set)
+                3 -> TabAbout(vm)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -411,23 +115,294 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 4.dp)
-        )
-        Surface(
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(20.dp)
+private fun TabMain(
+    s: AppSettings,
+    set: (AppSettings) -> Unit,
+    keyVisible: Boolean,
+    context: Context,
+    vm: ChatViewModel
+) {
+    Column(
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Тема", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Column(
-                Modifier.fillMaxWidth().padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                content = content
+            listOf(
+                "system" to "Системная",
+                "light" to "Светлая",
+                "dark" to "Тёмная"
+            ).forEach { (value, label) ->
+                FilterChip(
+                    selected = s.themeMode == value,
+                    onClick = { set(s.copy(themeMode = value)) },
+                    label = { Text(label) }
+                )
+            }
+        }
+
+        Text("Акцент", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ACCENTS.forEachIndexed { index, color ->
+                Box(
+                    Modifier
+                        .size(36.dp)
+                        .background(color, CircleShape)
+                        .clickable { set(s.copy(accent = index, dynamicColor = false)) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (s.accent == index) {
+                        Icon(Icons.Rounded.Check, null, tint = Color.White)
+                    }
+                }
+            }
+        }
+
+        SettingSwitch(
+            title = "Цвета системы",
+            subtitle = "Подхватить палитру с обоев телефона",
+            checked = s.dynamicColor,
+            onChange = { set(s.copy(dynamicColor = it)) }
+        )
+    }
+}
+
+@Composable
+private fun TabModel(
+    s: AppSettings,
+    set: (AppSettings) -> Unit,
+    keyVisible: Boolean,
+    context: Context,
+    vm: ChatViewModel
+) {
+    Column(
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Провайдер", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf(
+                PROVIDER_OPENROUTER to "OpenRouter",
+                PROVIDER_CUSTOM to "Свой сервер"
+            ).forEach { (value, label) ->
+                FilterChip(
+                    selected = s.provider == value,
+                    onClick = {
+                        if (s.provider != value) {
+                            val next = s.copy(provider = value)
+                            set(next.copy(model = next.defaultModel()))
+                        }
+                    },
+                    label = { Text(label) }
+                )
+            }
+        }
+
+        OutlinedTextField(
+            value = s.apiKey,
+            onValueChange = { set(s.copy(apiKey = it.trim())) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("API-ключ") },
+            singleLine = true,
+            visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                IconButton(onClick = { keyVisible = !keyVisible }) {
+                    Icon(
+                        if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                        if (keyVisible) "Скрыть" else "Показать"
+                    )
+                }
+            }
+        )
+
+        if (s.provider == PROVIDER_CUSTOM) {
+            OutlinedTextField(
+                value = s.baseUrl,
+                onValueChange = { set(s.copy(baseUrl = it.trim())) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Адрес сервера") },
+                placeholder = { Text("http://192.168.1.10:1234/v1") },
+                singleLine = true
             )
+        }
+
+        OutlinedTextField(
+            value = s.model,
+            onValueChange = { set(s.copy(model = it.trim())) },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Модель") },
+            singleLine = true
+        )
+
+        val presets = when (s.provider) {
+            PROVIDER_CUSTOM -> emptyList()
+            else -> MODEL_PRESETS
+        }
+        if (presets.isNotEmpty()) {
+            Text("Готовые модели", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                presets.forEach { id ->
+                    AssistChip(
+                        selected = s.model == id,
+                        onClick = { set(s.copy(model = id)) },
+                        label = { Text(id.substringAfterLast('/'), maxLines = 1) }
+                    )
+                }
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { vm.checkKey() },
+                enabled = !vm.checkingKey,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (vm.checkingKey) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Text("Проверить ключ")
+            }
+            TextButton(
+                onClick = {
+                    val url = when (s.provider) {
+                        PROVIDER_CUSTOM -> "https://lmstudio.ai"
+                        else -> "https://openrouter.ai/keys"
+                    }
+                    openUrl(context, url)
+                }
+            ) {
+                Text("Получить ключ")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabAccount(vm: ChatViewModel, set: (AppSettings) -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (vm.isLoggedIn) {
+            Text("Аккаунт: ${vm.settings.accountUser}", style = MaterialTheme.typography.titleMedium)
+            Button(
+                onClick = { vm.logoutAccount() },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                )
+            ) {
+                Text("Выйти из аккаунта")
+            }
+        } else {
+            Text("Войдите в аккаунт, чтобы сохранять переписку", style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(12.dp))
+            var user by remember { mutableStateOf("") }
+            var pass by remember { mutableStateOf("") }
+            var mode by remember { mutableStateOf(false) } // false = login, true = register
+
+            OutlinedTextField(
+                value = user,
+                onValueChange = { user = it },
+                label = { Text("Логин") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = pass,
+                onValueChange = { pass = it },
+                label = { Text("Пароль") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    if (mode) {
+                        vm.registerAccount(user, pass)
+                    } else {
+                        vm.loginAccount(user, pass)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(if (mode) "Зарегистрироваться" else "Войти")
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = { mode = !mode }
+            ) {
+                Text(if (mode) "Уже есть аккаунт? Войти" else "Нет аккаунта? Создать")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TabAbout(vm: ChatViewModel) {
+    Column(
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("LotiChat", style = MaterialTheme.typography.titleLarge)
+        Text(
+            "Версия 2.6",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            "Нативное приложение на Kotlin. " +
+                "Ваша переписка сохраняется на телефоне в аккаунте.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(16.dp))
+        Button(
+            onClick = {
+                val intent = Intent(Intent.ACTION_SEND)
+                    .setType("text/plain")
+                    .putExtra(Intent.EXTRA_TEXT, vm.exportJson())
+                runCatching {
+                    context = LocalContext.current
+                    context.startActivity(Intent.createChooser(intent, "Экспорт чатов"))
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Rounded.FileDownload, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Экспорт чатов (JSON)")
+        }
+        TextButton(
+            onClick = { vm.clearAll() }
+        ) {
+            Icon(Icons.Rounded.DeleteOutline, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Очистить все чаты", color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -437,7 +412,6 @@ private fun SettingSwitch(
     title: String,
     subtitle: String,
     checked: Boolean,
-    enabled: Boolean = true,
     onChange: (Boolean) -> Unit
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -450,7 +424,7 @@ private fun SettingSwitch(
             )
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked, onCheckedChange = onChange, enabled = enabled)
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
 

@@ -118,7 +118,7 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
     val s = vm.settings
     var user by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
-    var mode by remember { mutableStateOf("login") } // "login" или "register"
+    var mode by remember { mutableStateOf(false) }
 
     Column(
         Modifier
@@ -139,7 +139,7 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
         )
         Text(
-            "Вход в аккаунт — твоя переписка сохраняется",
+            "Вход в аккаунт — переписка сохраняется",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -149,7 +149,7 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             value = user,
             onValueChange = { user = it },
             label = { Text("Логин") },
-            placeholder = { Text("придумай логин") },
+            placeholder = { Text("ваш логин") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -158,14 +158,14 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             value = pass,
             onValueChange = { pass = it },
             label = { Text("Пароль") },
-            placeholder = { Text("придумай пароль") },
+            placeholder = { Text("ваш пароль") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
 
-        if (mode == "login") {
+        if (!mode) {
             Button(
                 onClick = {
                     if (vm.loginAccount(user, pass)) onLogin()
@@ -178,8 +178,8 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             ) { Text("Войти") }
             Spacer(Modifier.height(8.dp))
             TextButton(
-                onClick = { mode = "register" }
-            ) { Text("Ещё нет аккаунта? Создать") }
+                onClick = { mode = true }
+            ) { Text("Нет аккаунта? Создать") }
         } else {
             Button(
                 onClick = {
@@ -193,14 +193,14 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             ) { Text("Зарегистрироваться") }
             Spacer(Modifier.height(8.dp))
             TextButton(
-                onClick = { mode = "login" }
+                onClick = { mode = false }
             ) { Text("Уже есть аккаунт? Войти") }
         }
 
         if (s.accountUser.isNotBlank() && !s.accountLoggedIn) {
             Spacer(Modifier.height(16.dp))
             Text(
-                "Аккаунт найден: ${s.accountUser}. Введи пароль для входа.",
+                "Аккаунт: ${s.accountUser}. Введите пароль.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -215,8 +215,7 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 }
 
 private fun modelLabel(vm: ChatViewModel): String {
-    val s = vm.settings
-    val model = s.model.ifBlank { s.defaultModel() }
+    val model = vm.settings.model.ifBlank { "Loki" }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
     if (vm.searchEnabled) extras.add("поиск")
@@ -366,7 +365,7 @@ private fun EmptyState(vm: ChatViewModel) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text("Напиши первое сообщение", style = MaterialTheme.typography.headlineMedium)
+        Text("Напишите первое сообщение", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(6.dp))
         Text(
             "Loki · Бесплатно · Без ключа",
@@ -487,8 +486,8 @@ private fun AttachmentsRow(list: List<Attachment>, onImage: (String) -> Unit) {
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = a.name,
                         modifier = Modifier
-                            .size(132.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .size(100.dp)
+                            .clip(RoundedCornerShape(14.dp))
                             .clickable { onImage(path) },
                         contentScale = ContentScale.Crop
                     )
@@ -504,7 +503,7 @@ private fun AttachmentsRow(list: List<Attachment>, onImage: (String) -> Unit) {
                     ) {
                         Icon(Icons.Rounded.Description, null, Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
-                        Text(a.name.take(22), style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                        Text(a.name.take(20), style = MaterialTheme.typography.labelMedium, maxLines = 1)
                     }
                 }
             }
@@ -655,7 +654,7 @@ private fun Composer(vm: ChatViewModel) {
                             onClick = { attachMenu = false; openCamera() }
                         )
                         DropdownMenuItem(
-                            text = { Text("Фото из галереи") },
+                            text = { Text("Галерея") },
                             leadingIcon = { Icon(Icons.Rounded.PhotoLibrary, null) },
                             onClick = { attachMenu = false; pickImages.launch("image/*") }
                         )
@@ -943,15 +942,9 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(id, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                if (id.startsWith("demo:")) {
+                                if (id == "loki") {
                                     Text(
-                                        "бесплатно, без ключа",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                } else if (id.endsWith(":free")) {
-                                    Text(
-                                        "бесплатно (:free)",
+                                        "ваша модель · бесплатно",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
