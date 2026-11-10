@@ -318,13 +318,77 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             }
 
             Section("О приложении") {
-                Text("LotiChat 2.0", style = MaterialTheme.typography.titleMedium)
+                Text("LotiChat 2.1", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Нативное приложение: Kotlin + Jetpack Compose, Material 3 (Material You). " +
-                        "Без WebView и без внешних CDN.",
+                    "Нативное приложение на Material You 3. " +
+                        "Без WebView и без внешних CDN — интерфейс не ломается.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            Section("Режим разработчика") {
+                if (!vm.devMode) {
+                    Text(
+                        "Секретный режим. Пароль позволяет просматривать, " +
+                            "что пользователи отправляют нейронкам.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    var devPass by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = devPass,
+                        onValueChange = { devPass = it },
+                        label = { Text("Пароль разработчика") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = androidx.compose.ui.text.input.PasswordVisualTransformation()
+                    )
+                    Button(
+                        onClick = {
+                            if (vm.tryDevLogin(devPass)) {
+                                toastMessage = "Режим разработчика включён"
+                            } else {
+                                toastMessage = "Неверный пароль"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Войти в режим разработчика")
+                    }
+                } else {
+                    Text(
+                        "Режим разработчика активен. Логи последних сообщений:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 200.dp, max = 300.dp)
+                    ) {
+                        items(vm.devLogs.reversed(), key = { it }) { log ->
+                            Text(
+                                text = log,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            HorizontalDivider()
+                        }
+                    }
+                    Button(
+                        onClick = { vm.exitDevMode() },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    ) {
+                        Text("Выйти из режима разработчика")
+                    }
+                }
             }
 
             Spacer(Modifier.height(24.dp))

@@ -56,6 +56,7 @@ object ChatApi {
 
     fun effectiveModel(s: AppSettings, thinking: Boolean): String {
         val current = s.model.ifBlank { s.defaultModel() }
+        if (s.provider == "demo") return current
         if (!thinking) return current
         return when (s.provider) {
             PROVIDER_DEEPSEEK -> "deepseek-reasoner"

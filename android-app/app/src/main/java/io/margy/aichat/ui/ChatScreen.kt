@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Chat
 import androidx.compose.material.icons.rounded.Close
@@ -88,8 +89,6 @@ fun LotiChatRoot(vm: ChatViewModel) {
         else -> androidx.compose.foundation.isSystemInDarkTheme()
     }
 
-    val shouldShowKeyDialog = s.firstRun && s.apiKey.isBlank()
-
     LotiChatTheme(darkTheme = dark, dynamic = s.dynamicColor, accent = s.accent) {
         val context = LocalContext.current
         LaunchedEffect(vm.toastMessage) {
@@ -106,84 +105,6 @@ fun LotiChatRoot(vm: ChatViewModel) {
         if (vm.showModelPicker) {
             ModelPickerDialog(vm)
         }
-        if (shouldShowKeyDialog) {
-            ApiKeySetupDialog(
-                onKeyEntered = { key ->
-                    vm.updateSettings(s.copy(apiKey = key.trim(), firstRun = false))
-                },
-                onSkip = {
-                    vm.updateSettings(s.copy(firstRun = false))
-                },
-                onOpenWebsite = {
-                    val url = Uri.parse("https://openrouter.ai/keys")
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    )
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ApiKeySetupDialog(
-    onKeyEntered: (String) -> Unit,
-    onSkip: () -> Unit,
-    onOpenWebsite: () -> Unit
-) {
-    var key by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = {}) {
-        Surface(
-            shape = MaterialTheme.shapes.extraLarge,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh
-        ) {
-            Column(
-                Modifier
-                    .padding(24.dp)
-                    .widthIn(min = 280.dp)
-            ) {
-                Text("Быстрый старт", style = MaterialTheme.typography.headlineMedium)
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Чтобы модели отвечали, нужен бесплатный ключ OpenRouter. " +
-                        "Регистрация — 30 секунд, карта не нужна.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = key,
-                    onValueChange = { key = it },
-                    label = { Text("Вставь ключ OpenRouter") },
-                    placeholder = { Text("sk-or-…") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(16.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = {
-                            if (key.isNotBlank()) onKeyEntered(key)
-                        },
-                        enabled = key.isNotBlank()
-                    ) { Text("Готово") }
-                    TextButton(onClick = onOpenWebsite) {
-                        Text("Получить ключ")
-                    }
-                    TextButton(onClick = onSkip) { Text("Позже") }
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "Без ключа сообщения не отправятся. 3 встроенных модели: " +
-                        BUILTIN_FREE_MODELS.joinToString(", ") { it.substringAfterLast('/') },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
     }
 }
 
@@ -192,6 +113,7 @@ private fun modelLabel(vm: ChatViewModel): String {
     val provider = when (s.provider) {
         "deepseek" -> "DeepSeek"
         "custom" -> "Свой сервер"
+        "demo" -> "Демо (без ключа)"
         else -> "OpenRouter"
     }
     val model = s.model.ifBlank { s.defaultModel() }.substringAfterLast('/')
@@ -201,53 +123,6 @@ private fun modelLabel(vm: ChatViewModel): String {
     return buildString {
         append(provider).append(" · ").append(model)
         if (extras.isNotEmpty()) append(" · ").append(extras.joinToString(", "))
-    }
-}
-
-@Composable
-private fun ModelChipsRow(vm: ChatViewModel) {
-    val current = vm.settings.model
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        BUILTIN_FREE_MODELS.forEach { id ->
-            val label = id.substringAfterLast('/')
-            val isActive = current == id
-            val isFree = id.endsWith(":free")
-            FilterChip(
-                selected = isActive,
-                onClick = {
-                    vm.settings.let { s ->
-                        vm.updateSettings(s.copy(model = id))
-                    }
-                },
-                label = {
-                    Text(
-                        label.take(18),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal
-                        ),
-                        maxLines = 1
-                    )
-                }
-            )
-            if (isFree) {
-                Spacer(Modifier.width(2.dp))
-                Text(
-                    "бесплатно",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                )
-            }
-        }
-        Spacer(Modifier.width(8.dp))
-        TextButton(onClick = { vm.openSettings() }) {
-            Text("Другая модель …", style = MaterialTheme.typography.labelMedium)
-        }
     }
 }
 
@@ -306,6 +181,10 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                         }
                     },
                     actions = {
+                        // Выбор модели как вкладка/кнопка
+                        IconButton(onClick = { vm.showModelPicker = true }) {
+                            Icon(Icons.Rounded.ArrowDropDown, contentDescription = "Выбор модели")
+                        }
                         IconButton(onClick = { vm.newChat() }) {
                             Icon(Icons.Rounded.Add, contentDescription = "Новый чат")
                         }
@@ -322,8 +201,6 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
             bottomBar = { Composer(vm) }
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding)) {
-                ModelChipsRow(vm)
-                Spacer(Modifier.height(8.dp))
                 if (messages.isEmpty()) {
                     EmptyState(vm)
                 } else {
@@ -371,49 +248,33 @@ private fun EmptyState(vm: ChatViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(36.dp))
+        Spacer(Modifier.height(40.dp))
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(88.dp)
+            modifier = Modifier.size(96.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Rounded.Chat,
                     contentDescription = null,
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
-        Spacer(Modifier.height(18.dp))
-        Text("Чем помочь?", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(20.dp))
+        Text("Напиши первое сообщение", style = MaterialTheme.typography.headlineMedium)
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Бесплатный DeepSeek · Kotlin · Material You 3",
+            "Бесплатно · Без ключа · Material You",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(26.dp))
-        Column(
-            modifier = Modifier.widthIn(max = 440.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            listOf(
-                "Объясни простыми словами, как работает HTTPS",
-                "Составь план тренировок на неделю",
-                "Придумай 10 названий для кофейни"
-            ).forEach { hint ->
-                AssistChip(
-                    onClick = { vm.draft = hint },
-                    label = { Text(hint) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
+        Spacer(Modifier.height(32.dp))
     }
 }
 
@@ -729,7 +590,7 @@ private fun Composer(vm: ChatViewModel) {
                 )
 
                 MiniToggle(Icons.Rounded.Lightbulb, vm.thinking, "Мышление") { vm.thinking = !vm.thinking }
-                MiniToggle(Icons.Rounded.Public, vm.searchEnabled, "Поиск в интернете") { vm.searchEnabled = !vm.searchEnabled }
+                MiniToggle(Icons.Rounded.Public, vm.searchEnabled, "Поиск") { vm.searchEnabled = !vm.searchEnabled }
                 Spacer(Modifier.width(2.dp))
 
                 FilledIconButton(
@@ -842,7 +703,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 Column {
                     Text("LotiChat", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "Kotlin · Material You 3",
+                        "Material You 3",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -902,7 +763,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.0 · Kotlin + Compose Material 3")
+                    vm.showToast("LotiChat 2.1 · Material You 3")
                 },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             )
@@ -929,6 +790,71 @@ private fun ImagePreviewDialog(path: String, onClose: () -> Unit) {
             } else {
                 Box(Modifier.size(200.dp), contentAlignment = Alignment.Center) {
                     Text("Не удалось открыть изображение")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ModelPickerDialog(vm: ChatViewModel) {
+    val all = if (vm.settings.isDemo()) BUILTIN_FREE_MODELS else (vm.models.ifEmpty { BUILTIN_FREE_MODELS })
+    var query by remember { mutableStateOf("") }
+    val filtered = remember(all, query) {
+        if (query.isBlank()) all else all.filter { it.contains(query.trim(), ignoreCase = true) }
+    }
+
+    Dialog(onDismissRequest = { vm.closeModelPicker() }) {
+        Surface(
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Column(
+                Modifier
+                    .padding(20.dp)
+                    .heightIn(max = 560.dp)
+            ) {
+                Text("Выбор модели", style = MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Поиск") },
+                    singleLine = true
+                )
+                Spacer(Modifier.height(8.dp))
+                LazyColumn(Modifier.weight(1f, fill = false)) {
+                    items(filtered, key = { it }) { id ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { vm.chooseModel(id) }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text(id, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                if (id.startsWith("demo:")) {
+                                    Text(
+                                        "бесплатно, без ключа",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                } else if (id.endsWith(":free")) {
+                                    Text(
+                                        "бесплатно (:free)",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                            if (id == vm.settings.model) {
+                                Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    }
                 }
             }
         }

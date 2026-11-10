@@ -2,11 +2,12 @@ package io.margy.aichat.data
 
 import android.content.Context
 
-const val DEFAULT_SYSTEM = "Ты — дружелюбный и умный ассистент LotiChat. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
+const val DEFAULT_SYSTEM = "Ты — дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
 const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_CUSTOM = "custom"
+const val PROVIDER_DEMO = "demo"
 
 const val DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-chat-v3-0324:free"
 const val DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
@@ -21,17 +22,20 @@ val MODEL_PRESETS = listOf(
 
 val DEEPSEEK_PRESETS = listOf("deepseek-chat", "deepseek-reasoner")
 
-/// 3 модели, которые доступны сразу после установки — пользователю не нужно ничего настраивать
+/// 3 демо-модели, которые работают БЕЗ ключа — сразу после установки
 val BUILTIN_FREE_MODELS = listOf(
-    "deepseek/deepseek-chat-v3-0324:free",
-    "deepseek/deepseek-r1:free",
-    "google/gemini-2.0-flash-exp:free"
+    "demo:claude",
+    "demo:gpt",
+    "demo:deepseek"
 )
 
+/// Секретный пароль для режима разработчика
+const val DEV_MODE_PASSWORD = "dev777"
+
 data class AppSettings(
-    val provider: String = PROVIDER_OPENROUTER,
+    val provider: String = PROVIDER_DEMO,
     val apiKey: String = "",
-    val model: String = DEFAULT_OPENROUTER_MODEL,
+    val model: String = BUILTIN_FREE_MODELS.first(),
     val baseUrl: String = "",
     val system: String = DEFAULT_SYSTEM,
     val temperature: Float = 0.7f,
@@ -39,22 +43,27 @@ data class AppSettings(
     val themeMode: String = "system",
     val accent: Int = 0,
     val sendImages: Boolean = true,
-    val firstRun: Boolean = true
+    val firstRun: Boolean = true,
+    val devMode: Boolean = false,
+    val devPassword: String = ""
 ) {
     fun defaultModel(): String = when (provider) {
         PROVIDER_DEEPSEEK -> DEFAULT_DEEPSEEK_MODEL
         PROVIDER_CUSTOM -> ""
+        PROVIDER_DEMO -> BUILTIN_FREE_MODELS.first()
         else -> DEFAULT_OPENROUTER_MODEL
     }
+
+    fun isDemo(): Boolean = provider == PROVIDER_DEMO
 }
 
 class SettingsStore(context: Context) {
     private val sp = context.getSharedPreferences("lotichat_settings", Context.MODE_PRIVATE)
 
     fun load(): AppSettings = AppSettings(
-        provider = sp.getString("provider", PROVIDER_OPENROUTER) ?: PROVIDER_OPENROUTER,
+        provider = sp.getString("provider", PROVIDER_DEMO) ?: PROVIDER_DEMO,
         apiKey = sp.getString("apiKey", "").orEmpty(),
-        model = sp.getString("model", DEFAULT_OPENROUTER_MODEL).orEmpty(),
+        model = sp.getString("model", BUILTIN_FREE_MODELS.first()).orEmpty(),
         baseUrl = sp.getString("baseUrl", "").orEmpty(),
         system = sp.getString("system", DEFAULT_SYSTEM) ?: DEFAULT_SYSTEM,
         temperature = sp.getFloat("temperature", 0.7f),
@@ -62,7 +71,9 @@ class SettingsStore(context: Context) {
         themeMode = sp.getString("themeMode", "system") ?: "system",
         accent = sp.getInt("accent", 0),
         sendImages = sp.getBoolean("sendImages", true),
-        firstRun = sp.getBoolean("firstRun", true)
+        firstRun = sp.getBoolean("firstRun", true),
+        devMode = sp.getBoolean("devMode", false),
+        devPassword = sp.getString("devPassword", "").orEmpty()
     )
 
     fun save(s: AppSettings) {
@@ -78,6 +89,8 @@ class SettingsStore(context: Context) {
             .putInt("accent", s.accent)
             .putBoolean("sendImages", s.sendImages)
             .putBoolean("firstRun", s.firstRun)
+            .putBoolean("devMode", s.devMode)
+            .putString("devPassword", s.devPassword)
             .apply()
     }
 }

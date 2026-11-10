@@ -15,6 +15,7 @@ import io.margy.aichat.data.ChatStore
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.data.SettingsStore
+import io.margy.aichat.data.PROVIDER_DEMO
 import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
@@ -64,6 +65,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         private set
 
+    /// Лог всех сообщений для режима разработчика
+    var devLogs by mutableStateOf<List<String>>(emptyList())
+        private set
+
     private var sendJob: Job? = null
 
     init {
@@ -75,8 +80,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val currentChat: Chat?
         get() = chats.firstOrNull { it.id == currentId }
 
+    /// Режим разработчика активен?
+    val devMode: Boolean
+        get() = settings.devMode
+
+    /// API готов (требуется ключ, кроме демо-режима)
     val apiReady: Boolean
-        get() = settings.apiKey.isNotBlank()
+        get() = settings.isDemo() || settings.apiKey.isNotBlank()
 
     fun openSettings() {
         screen = "settings"
@@ -163,11 +173,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val text = draft.trim()
         val atts = pending
         if (text.isEmpty() && atts.isEmpty()) return
-        if (!apiReady) {
+
+        // Проверяем готовность (для демо-режима ключ не нужен)
+        if (!settings.isDemo() && settings.apiKey.isBlank()) {
             toastMessage = "Сначала вставь API-ключ в настройках"
             screen = "settings"
             return
         }
+
         draft = ""
         pending = emptyList()
         val chatId = ensureChat()
@@ -180,6 +193,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 messages = c.messages + userMsg + aiMsg
             )
         }
+        // Пишем в лог разработчика
+        addDevLog("ПОЛЬЗОВАТЕЛЬ: $text")
         launchReply(chatId, aiMsg.id, atts)
     }
 
@@ -254,6 +269,25 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         showModelPicker = false
     }
 
+    /// Войти в режим разработчика по паролю
+    fun tryDevLogin(password: String): Boolean {
+        if (password == "dev777") {
+            updateSettings(settings.copy(devMode = true, devPassword = password))
+            return true
+        }
+        return false
+    }
+
+    fun exitDevMode() {
+        updateSettings(settings.copy(devMode = false))
+    }
+
+    private fun addDevLog(text: String) {
+        if (!settings.devMode) return
+        val entry = "[${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}] $text"
+        devLogs = devLogs + entry
+    }
+
     // ------------------------------------------------------------------
 
     private fun ensureChat(): String {
@@ -292,7 +326,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun setStatus(chatId: String, msgId: String, status: String?) {
-        patchMessage(chatId, msgId) { it.copy(status = status) }
+        patchMessage(chatId, aiId = msgId) { it.copy(status = status) }
     }
 
     private fun persistNow() {
@@ -307,6 +341,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val chatNow = chats.firstOrNull { it.id == chatId } ?: return@launch
                 val history = chatNow.messages.filter { it.id != aiId && !it.error }
+
+                // Демо-режим — отвечаем без ключа
+                if (settings.isDemo()) {
+                    runDemoReply(chatId, aiId, history.lastOrNull { it.role == Role.USER }?.text ?: "")
+                    return@launch
+                }
+
                 val model = ChatApi.effectiveModel(settings, thinking)
                 var withImages = settings.sendImages && atts.any { it.isImage && it.dataUrl != null }
 
@@ -390,5 +431,57 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 persistNow()
             }
         }
+    }
+
+    /// Демо-ответчик без ключа — 3 личности
+    private fun runDemoReply(chatId: String, aiId: String, userText: String) {
+        val model = settings.model
+        val response = when (model) {
+            "demo:claude" -> demoClaude(userText)
+            "demo:gpt" -> demoGpt(userText)
+            else -> demoDeepseek(userText)
+        }
+
+        // Имитацияストリминга ответа посимвольно
+        var delta = StringBuilder()
+        sendJob = viewModelScope.launch {
+            try {
+                for (ch in response) {
+                    delta.append(ch)
+                    patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
+                    withContext(Dispatchers.Main) {
+                        kotlinx.coroutines.delay(30)
+                    }
+                }
+                addDevLog("ДЕМО ($model): $response")
+                patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
+            } catch (e: Exception) {
+                patchMessage(chatId, aiId) {
+                    it.copy(streaming = false, text = "Ошибка демо: ${e.message}")
+                }
+            } finally {
+                busy = false
+                sendJob = null
+                persistNow()
+            }
+        }
+    }
+
+    private fun demoClaude(text: String): String {
+        return "Привет! Я Claude (демо-режим). Получил твой вопрос: «$text». " +
+            "Это бесплатная демо-модель, которая работает без API-ключа. " +
+            "Для реальных нейросетей добавь ключ OpenRouter в настройках."
+    }
+
+    private fun demoGpt(text: String): String {
+        return "Здравствуйте! Я GPT демо-версия. Ваш сообщение: «$text» — принято. " +
+            "В этом режиме отвечаю без подключения к внешним API. " +
+            "Настройте OpenRouter ключ для доступа к полным моделям."
+    }
+
+    private fun demoDeepseek(text: String): String {
+        return "Привет! Это DeepSeek демо. Ты написал: «$text». " +
+            "Отвечаю из встроенной базы знаний без интернета и ключей. " +
+            "Хочешь — подключи OpenRouter в настройках и получи доступ к DeepSeek Chat/R1."
     }
 }
