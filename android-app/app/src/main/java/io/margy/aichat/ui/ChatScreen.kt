@@ -704,7 +704,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 Column {
                     Text("LotiChat", style = MaterialTheme.typography.titleLarge)
                     Text(
-                        "Material You 3",
+                        "Нативное приложение",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -764,7 +764,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.1 · Material You 3")
+                    vm.showToast("LotiChat 2.2")
                 },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
             )

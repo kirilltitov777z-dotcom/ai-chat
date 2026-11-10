@@ -320,7 +320,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Section("О приложении") {
                 Text("LotiChat 2.1", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Нативное приложение на Material You 3. " +
+                    "Нативное приложение. " +
                         "Без WebView и без внешних CDN — интерфейс не ломается.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -330,8 +330,8 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Section("Режим разработчика") {
                 if (!vm.devMode) {
                     Text(
-                        "Секретный режим. Пароль позволяет просматривать, " +
-                            "что пользователи отправляют нейронкам.",
+                        "Секретный режим службы поддержки. " +
+                            "Показывает технические логи работы приложения.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

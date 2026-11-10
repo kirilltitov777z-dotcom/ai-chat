@@ -20,56 +20,56 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 val ACCENTS = listOf(
-    Color(0xFF7B61FF), // неоновый фиолетовый
-    Color(0xFF00D9C0), // мятный неон
-    Color(0xFFFF6B6B), // коралловый
-    Color(0xFF4ECDC4), // бирюзовый неон
-    Color(0xFFFFA726), // оранжевый неон
-    Color(0xFF8E44AD)  // глубокий фиолетовый
+    Color(0xFF1E3A8A), // темно-синий
+    Color(0xFF7C3AED), // фиолетовый
+    Color(0xFFBE185D), // розовый
+    Color(0xFF0891B2), // cyan
+    Color(0xFF15803D), // зелёный
+    Color(0xFFD97706)  // оранжевый
 )
 
-val ACCENT_NAMES = listOf("Неон", "Мятный", "Коралл", "Бирюза", "Оранж", "Фиолет")
+val ACCENT_NAMES = listOf("Синий", "Фиолет", "Роза", "Cyan", "Зелёный", "Оранж")
 
 private fun lightScheme(seed: Color) = lightColorScheme(
     primary = seed,
     onPrimary = Color.White,
-    primaryContainer = lerp(Color.White, seed, 0.15f),
-    onPrimaryContainer = lerp(seed, Color.Black, 0.60f),
-    secondary = lerp(seed, Color.Black, 0.12f),
+    primaryContainer = lerp(Color.White, seed, 0.12f),
+    onPrimaryContainer = lerp(seed, Color.Black, 0.65f),
+    secondary = lerp(seed, Color.Black, 0.10f),
     onSecondary = Color.White,
-    secondaryContainer = lerp(Color.White, seed, 0.10f),
-    onSecondaryContainer = lerp(seed, Color.Black, 0.60f),
-    tertiary = lerp(seed, Color(0xFFFFB74D), 0.55f),
-    surface = Color(0xFFF8F9FF),
-    background = Color(0xFFF8F9FF),
-    surfaceVariant = lerp(Color.White, seed, 0.08f),
-    onSurfaceVariant = Color(0xFF4A4A5A),
+    secondaryContainer = lerp(Color.White, seed, 0.08f),
+    onSecondaryContainer = lerp(seed, Color.Black, 0.65f),
+    tertiary = lerp(seed, Color(0xFFF59E0B), 0.5f),
+    surface = Color(0xFFFAFAFA),
+    background = Color(0xFFFAFAFA),
+    surfaceVariant = lerp(Color.White, seed, 0.06f),
+    onSurfaceVariant = Color(0xFF374151),
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = lerp(Color(0xFFF8F9FF), seed, 0.02f),
-    surfaceContainer = lerp(Color(0xFFF8F9FF), seed, 0.05f),
-    surfaceContainerHigh = lerp(Color(0xFFF8F9FF), seed, 0.08f),
-    surfaceContainerHighest = lerp(Color(0xFFF8F9FF), seed, 0.11f)
+    surfaceContainerLow = lerp(Color(0xFFFAFAFA), seed, 0.015f),
+    surfaceContainer = lerp(Color(0xFFFAFAFA), seed, 0.04f),
+    surfaceContainerHigh = lerp(Color(0xFFFAFAFA), seed, 0.07f),
+    surfaceContainerHighest = lerp(Color(0xFFFAFAFA), seed, 0.10f)
 )
 
 private fun darkScheme(seed: Color) = darkColorScheme(
-    primary = lerp(seed, Color.White, 0.45f),
+    primary = lerp(seed, Color.White, 0.4f),
     onPrimary = Color.Black,
-    primaryContainer = lerp(seed, Color.Black, 0.25f),
-    onPrimaryContainer = lerp(seed, Color.White, 0.90f),
-    secondary = lerp(seed, Color.White, 0.50f),
+    primaryContainer = lerp(seed, Color.Black, 0.2f),
+    onPrimaryContainer = lerp(seed, Color.White, 0.92f),
+    secondary = lerp(seed, Color.White, 0.45f),
     onSecondary = Color.Black,
-    secondaryContainer = lerp(seed, Color.Black, 0.30f),
-    onSecondaryContainer = lerp(seed, Color.White, 0.88f),
-    tertiary = lerp(seed, Color(0xFFFFCC80), 0.50f),
-    surface = Color(0xFF0A0A0F),
-    background = Color(0xFF0A0A0F),
-    surfaceVariant = lerp(Color(0xFF0A0A0F), seed, 0.15f),
-    onSurfaceVariant = Color(0xFFB8B8C8),
-    surfaceContainerLowest = Color(0xFF050508),
-    surfaceContainerLow = lerp(Color(0xFF0A0A0F), seed, 0.04f),
-    surfaceContainer = lerp(Color(0xFF0A0A0F), seed, 0.07f),
-    surfaceContainerHigh = lerp(Color(0xFF0A0A0F), seed, 0.11f),
-    surfaceContainerHighest = lerp(Color(0xFF0A0A0F), seed, 0.15f)
+    secondaryContainer = lerp(seed, Color.Black, 0.25f),
+    onSecondaryContainer = lerp(seed, Color.White, 0.90f),
+    tertiary = lerp(seed, Color(0xFFFCD34D), 0.45f),
+    surface = Color(0xFF0F172A),
+    background = Color(0xFF0F172A),
+    surfaceVariant = lerp(Color(0xFF0F172A), seed, 0.12f),
+    onSurfaceVariant = Color(0xFFCBD5E1),
+    surfaceContainerLowest = Color(0xFF020617),
+    surfaceContainerLow = lerp(Color(0xFF0F172A), seed, 0.03f),
+    surfaceContainer = lerp(Color(0xFF0F172A), seed, 0.06f),
+    surfaceContainerHigh = lerp(Color(0xFF0F172A), seed, 0.09f),
+    surfaceContainerHighest = lerp(Color(0xFF0F172A), seed, 0.12f)
 )
 
 private val AppShapes = Shapes(

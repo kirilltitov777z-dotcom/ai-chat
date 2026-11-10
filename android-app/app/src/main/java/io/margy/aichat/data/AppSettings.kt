@@ -30,7 +30,7 @@ val BUILTIN_FREE_MODELS = listOf(
 )
 
 /// Секретный пароль для режима разработчика
-const val DEV_MODE_PASSWORD = "dev777"
+const val DEV_MODE_PASSWORD = "Loti_Dev_2026!@#"
 
 data class AppSettings(
     val provider: String = PROVIDER_DEMO,

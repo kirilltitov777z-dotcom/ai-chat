@@ -197,8 +197,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 messages = c.messages + userMsg + aiMsg
             )
         }
-        // Пишем в лог разработчика
-        addDevLog("ПОЛЬЗОВАТЕЛЬ: $text")
+        addDevLog("msg: $text")
         launchReply(chatId, aiMsg.id, atts)
     }
 
@@ -275,7 +274,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     /// Войти в режим разработчика по паролю
     fun tryDevLogin(password: String): Boolean {
-        if (password == "dev777") {
+        if (password == "Loti_Dev_2026!@#") {
             updateSettings(settings.copy(devMode = true, devPassword = password))
             return true
         }
@@ -457,7 +456,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         kotlinx.coroutines.delay(30)
                     }
                 }
-                addDevLog("ДЕМО ($model): $response")
+                addDevLog("demo($model): ok")
                 patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
             } catch (e: Exception) {
                 patchMessage(chatId, aiId) {
