@@ -65,6 +65,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         private set
 
+    fun setScreen(value: String) {
+        screen = value
+    }
+
     /// Лог для режима разработчика
     var devLogs by mutableStateOf<List<String>>(emptyList())
         private set
@@ -112,6 +116,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     fun closeLogin() {
         showLogin = false
+    }
+
+    fun toChatScreen() {
+        setScreen("chat")
     }
 
     fun updateSettings(s: AppSettings) {

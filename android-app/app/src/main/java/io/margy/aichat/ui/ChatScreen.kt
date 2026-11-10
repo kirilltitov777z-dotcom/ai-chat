@@ -115,6 +115,7 @@ fun LotiChatRoot(vm: ChatViewModel) {
 
 @Composable
 private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
+    val s = vm.settings
     var user by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var mode by remember { mutableStateOf("login") } // "login" или "register"
@@ -208,7 +209,7 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         TextButton(onClick = {
             vm.closeLogin()
-            vm.screen = "chat"
+            vm.toChatScreen()
         }) { Text("Продолжить без аккаунта") }
     }
 }
