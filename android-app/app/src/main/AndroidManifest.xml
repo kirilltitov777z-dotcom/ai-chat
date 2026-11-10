@@ -5,8 +5,9 @@
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
     <application
-        android:label="AI Чат"
+        android:label="LotiChat"
         android:icon="@drawable/ic"
+        android:hardwareAccelerated="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:allowBackup="true"
         android:supportsRtl="true">

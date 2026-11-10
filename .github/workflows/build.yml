@@ -40,7 +40,7 @@ jobs:
             gh release edit apk --latest
           else
             gh release create apk AI-Chat.apk \
-              --title "AI Чат — APK" \
+              --title "LotiChat — APK" \
               --notes "Свежая сборка приложения. Скачивай без логина, устанавливай как обычное приложение." \
               --latest
           fi

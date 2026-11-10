@@ -1,8 +1,8 @@
 {
-  "name": "AI Чат",
-  "short_name": "AI Чат",
+  "name": "LotiChat",
+  "short_name": "LotiChat",
   "lang": "ru",
-  "description": "ИИ чат на бесплатных моделях DeepSeek через OpenRouter, стиль Material You",
+  "description": "LotiChat — ИИ чат на бесплатных моделях DeepSeek через OpenRouter, стиль Material You",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

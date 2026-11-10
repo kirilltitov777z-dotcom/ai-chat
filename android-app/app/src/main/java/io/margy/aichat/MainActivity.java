@@ -7,6 +7,9 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Message;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.Window;
 import android.webkit.PermissionRequest;
 import android.webkit.ValueCallback;
@@ -51,6 +54,26 @@ public class MainActivity extends Activity {
         st.setAllowFileAccess(false);
         st.setMediaPlaybackRequiresUserGesture(false);
         st.setTextZoom(100);
+        st.setSupportMultipleWindows(true);
+
+        // фокус и клавиатура
+        web.setFocusable(true);
+        web.setFocusableInTouchMode(true);
+        web.setClickable(true);
+        web.setLongClickable(true);
+        web.requestFocus(View.FOCUS_DOWN);
+        web.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent e) {
+                switch (e.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_UP:
+                        if (!v.hasFocus()) v.requestFocusFromTouch();
+                        break;
+                }
+                return false;
+            }
+        });
 
         web.setWebViewClient(new WebViewClient() {
             @Override
@@ -71,6 +94,7 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView v, String url) {
                 injectDark();
+                web.requestFocus(View.FOCUS_DOWN);
             }
         });
 
@@ -116,6 +140,25 @@ public class MainActivity extends Activity {
                     return false;
                 }
             }
+
+            @Override
+            public boolean onCreateWindow(WebView v, boolean dialog, boolean userGesture, Message resultMsg) {
+                try {
+                    WebView tmp = new WebView(v.getContext());
+                    tmp.setWebViewClient(new WebViewClient() {
+                        @Override
+                        public boolean shouldOverrideUrlLoading(WebView vv, WebResourceRequest r) {
+                            Uri u = r.getUrl();
+                            if (!"appassets.androidplatform.net".equals(u.getHost())) {
+                                try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) {}
+                            }
+                            return true;
+                        }
+                    });
+                    ((WebView.WebViewTransport) resultMsg.obj).setWebView(tmp);
+                } catch (Exception ignored) {}
+                return true;
+            }
         });
 
         if (savedInstanceState != null) {
@@ -132,9 +175,13 @@ public class MainActivity extends Activity {
 
     private void applyStatusBar() {
         Window w = getWindow();
-        if (w != null) {
-            w.setStatusBarColor(isDark() ? 0xff141218 : 0xfffef7ff);
-        }
+        if (w == null) return;
+        w.setStatusBarColor(isDark() ? 0xff141218 : 0xfffef7ff);
+        View d = w.getDecorView();
+        int f = d.getSystemUiVisibility();
+        if (isDark()) f &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        else f |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        d.setSystemUiVisibility(f);
     }
 
     private void injectDark() {

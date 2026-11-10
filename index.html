@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#141218">
-<meta name="description" content="ИИ чат на бесплатных моделях (DeepSeek через OpenRouter) в стиле Material You">
-<title>AI Чат</title>
+<meta name="description" content="LotiChat — ИИ чат на бесплатных моделях (DeepSeek через OpenRouter) в стиле Material You">
+<title>LotiChat</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -165,17 +165,25 @@ details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padd
 #snack{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);background:var(--sc3);color:var(--app-fg);padding:11px 20px;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:80;opacity:0;pointer-events:none;transition:all .25s;max-width:88%;text-align:center}
 #snack.show{opacity:1;transform:translateX(-50%)}
 [hidden]{display:none!important}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.3em;flex:0 0 auto}
+span[data-ic]{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;flex:0 0 auto}
+.logo svg.ic{fill:currentColor;stroke:none}
+.logo{color:#fff}
+.hero .big{font-size:0;display:flex;align-items:center;justify-content:center}
+.hero .big span[data-ic]{width:56px;height:56px}
+.hero .big svg.ic{width:100%;height:100%;fill:var(--accent);stroke:none;stroke-width:1.6}
+
 ::-webkit-scrollbar{width:0;height:0}
 </style>
 </head>
 <body>
 
 <header class="appbar">
-  <button class="icon-btn" id="menuBtn">☰</button>
-  <div class="logo">✨</div>
-  <h1 id="chatTitle">AI Чат</h1>
-  <button class="icon-btn" id="themeBtn" title="Тема">🌗</button>
-  <button class="icon-btn" id="setBtn">⚙️</button>
+  <button class="icon-btn" id="menuBtn"><span data-ic="menu"></span></button>
+  <div class="logo"><span data-ic="logo"></span></div>
+  <h1 id="chatTitle">LotiChat</h1>
+  <button class="icon-btn" id="themeBtn" title="Тема"><span data-ic="moon"></span></button>
+  <button class="icon-btn" id="setBtn"><span data-ic="gear"></span></button>
 </header>
 
 <main id="msgs"></main>
@@ -183,33 +191,33 @@ details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padd
 <div class="composer">
   <div id="att" hidden></div>
   <div class="menu" id="attMenu" hidden>
-    <button id="mPhoto">📷 Сделать фото</button>
-    <button id="mGallery">🖼 Фото из галереи</button>
-    <button id="mFile">📎 Прикрепить файл</button>
+    <button id="mPhoto"><span data-ic="camera"></span> Сделать фото</button>
+    <button id="mGallery"><span data-ic="image"></span> Фото из галереи</button>
+    <button id="mFile"><span data-ic="clip"></span> Прикрепить файл</button>
   </div>
   <div class="inpbar">
-    <button class="icon-btn" id="attBtn" style="color:var(--muted)">➕</button>
+    <button class="icon-btn" id="attBtn" style="color:var(--muted)"><span data-ic="plus"></span></button>
     <textarea id="inp" rows="1" placeholder="Сообщение…"></textarea>
-    <button class="send-btn" id="sendBtn">➤</button>
-    <button class="send-btn" id="stopBtn" hidden style="background:var(--sc2);color:var(--err)">■</button>
+    <button class="send-btn" id="sendBtn"><span data-ic="send"></span></button>
+    <button class="send-btn" id="stopBtn" hidden style="background:var(--sc2);color:var(--err)"><span data-ic="stop"></span></button>
   </div>
 </div>
 
 <div class="scrim" id="drawerScrim"></div>
 <aside class="drawer" id="drawer">
-  <div class="drawer-head"><div class="logo">✨</div>AI Чат</div>
+  <div class="drawer-head"><div class="logo"><span data-ic="logo"></span></div>LotiChat</div>
   <button id="newChat" class="btn">＋&nbsp; Новый чат</button>
   <div id="chatList"></div>
   <div class="drawer-foot">
-    <button class="drawer-link" id="openSettings">⚙️ Настройки</button>
+    <button class="drawer-link" id="openSettings"><span data-ic="gear"></span> Настройки</button>
   </div>
 </aside>
 
 <div class="scrim" id="setScrim"></div>
 <section class="sheet" id="sheet">
-  <header><div class="grab"></div><h2>⚙️ Настройки</h2><button class="icon-btn" id="setClose">✕</button></header>
+  <header><div class="grab"></div><h2>Настройки</h2><button class="icon-btn" id="setClose">✕</button></header>
   <div class="sheet-body">
-    <h3>🧠 ИИ</h3>
+    <h3>ИИ</h3>
     <label class="fld"><span>Провайдер</span>
       <select id="sProv">
         <option value="openrouter">OpenRouter — бесплатные модели</option>
@@ -221,33 +229,33 @@ details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padd
     <label class="fld"><span>API-ключ</span>
       <div class="row-key">
         <input id="sKey" type="password" placeholder="sk-…" autocomplete="off">
-        <button class="icon-btn" id="keyEye" style="background:var(--app-bg);border-radius:14px">👁</button>
+        <button class="icon-btn" id="keyEye" style="background:var(--app-bg);border-radius:14px"><span data-ic="eye"></span></button>
       </div>
     </label>
-    <p class="hint">🔑 OpenRouter: регистрируешься на openrouter.ai → Keys → Create Key. Это бесплатно, бесплатные модели помечены «:free».</p>
+    <p class="hint">OpenRouter: регистрируешься на openrouter.ai → Keys → Create Key. Это бесплатно, бесплатные модели помечены «:free».</p>
     <label class="fld" id="baseRow" hidden><span>Базовый URL</span><input id="sBase" type="text" placeholder="https://localhost:1234/v1" spellcheck="false"></label>
     <label class="fld"><span>Модель</span>
       <input id="sModel" list="modelList" placeholder="deepseek/deepseek-chat-v3-0324:free" spellcheck="false">
       <datalist id="modelList"></datalist>
     </label>
-    <div class="row"><button class="btn" id="loadModels">⬇️ Проверить ключ и загрузить модели</button></div>
+    <div class="row"><button class="btn" id="loadModels"><span data-ic="dl"></span> Проверить ключ и загрузить модели</button></div>
     <label class="fld"><span>Системный промпт (характер бота)</span><textarea id="sSys" rows="3"></textarea></label>
     <label class="fld"><span>Температура (креатив): <b id="tempVal">0.7</b></span><input id="sTemp" type="range" min="0" max="1.5" step="0.1"></label>
 
-    <h3>🎨 Внешний вид</h3>
+    <h3>Внешний вид</h3>
     <div class="row seg" id="themeSeg">
       <button data-t="auto">Авто</button><button data-t="light">Светлая</button><button data-t="dark">Тёмная</button>
     </div>
     <p class="hint">Цвет акцента</p>
     <div class="swatches" id="accents"></div>
 
-    <h3>💾 Данные</h3>
+    <h3>Данные</h3>
     <div class="row">
-      <button class="btn" id="btnExport">⬆️ Экспорт чатов</button>
-      <button class="btn" id="btnImport">⬇️ Импорт</button>
+      <button class="btn" id="btnExport">Экспорт чатов</button>
+      <button class="btn" id="btnImport">Импорт</button>
       <input type="file" id="importFile" accept=".json,application/json" hidden>
     </div>
-    <div class="row"><button class="btn wide danger" id="btnWipe">🗑 Удалить все чаты и настройки</button></div>
+    <div class="row"><button class="btn wide danger" id="btnWipe">Удалить все чаты и настройки</button></div>
     <p class="hint">Всё хранится локально в браузере телефона. Ключ отправляется только выбранному ИИ-серверу. Тайм-аутов нет — ответы приходят стримом, пока модель не закончит.</p>
   </div>
 </section>
@@ -274,10 +282,32 @@ details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padd
 const $=s=>document.querySelector(s);
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const load=(k,d)=>{try{const v=localStorage.getItem('aichat.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}};
-const save=(k,v)=>{try{localStorage.setItem('aichat.'+k,JSON.stringify(v))}catch(e){toast('⚠ Память браузера переполнена — удали старые чаты с фото')}};
+const save=(k,v)=>{try{localStorage.setItem('aichat.'+k,JSON.stringify(v))}catch(e){toast('Память переполнена — удали старые чаты с фото')}};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let toastT=0;
 function toast(t){const e=$('#snack');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),2600)}
+
+/* svg-иконки вместо эмодзи */
+const ICONS={
+  menu:'M3 6h18M3 12h18M3 18h18',
+  gear:'M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2zM15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z',
+  moon:'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  plus:'M12 5v14M5 12h14',
+  send:'M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z',
+  stop:'M7 7h10v10H7z',
+  camera:'M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3zM12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  image:'M3 3h18v18H3zM9 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM21 15l-5-5L5 21',
+  clip:'m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57a4 4 0 1 1 5.66 5.66l-8.49 8.48a2 2 0 0 1-2.83-2.83l8.49-8.48',
+  file:'M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM13 2v7h7',
+  eye:'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+  dl:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+  copy:'M9 9h13v13H9zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1',
+  share:'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13',
+  trash:'M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6',
+  refresh:'M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5',
+  logo:'M12 3c4.97 0 9 3.22 9 7.2S16.97 17.4 12 17.4c-1.06 0-2.08-.15-3.02-.42l-3.48 1.62 1.2-3.36C4.4 13.9 3 11.9 3 10.2 3 6.2 7.03 3 12 3z'
+};
+function ICON(n){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[n]||ICONS.logo)+'"/></svg>'}
 
 /* ============ состояние ============ */
 const DEF={provider:'openrouter',apiKey:'',baseUrl:'',model:'deepseek/deepseek-chat-v3-0324:free',system:'Ты — дружелюбный и умный ассистент. Отвечай кратко и по делу на русском, если не попросили иначе. Форматируй ответ Markdown-ом.',temperature:0.7,theme:'auto',accent:-1,models:[]};
@@ -336,16 +366,16 @@ function decorate(node){
 /* ============ рендер чата ============ */
 const msgs=$('#msgs');
 function renderHero(){
-  msgs.innerHTML=`<div class="hero"><div class="big">✨</div><h2>Привет! Я твой ИИ</h2>
-  <p>Работаю на бесплатных моделях DeepSeek через OpenRouter. Настрой ключ в ⚙️ и общайся — тайм-аутов нет.</p>
+  msgs.innerHTML=`<div class="hero"><div class="big"><span data-ic="logo"></span></div><h2>Привет! Я LotiChat</h2>
+  <p>Работаю на бесплатных моделях DeepSeek через OpenRouter. Настрой ключ в настройках и общайся — тайм-аутов нет.</p>
   <div class="ex">
-    <button data-q="Напиши смешной стих про кота-программиста">🐱 Стишок про кота-программиста</button>
-    <button data-q="Объясни, как работают нейросети, простыми словами">🧠 Объясни нейросети просто</button>
-    <button data-q="Составь план тренировок на неделю для новичка">💪 План тренировок на неделю</button>
+    <button data-q="Напиши смешной стих про кота-программиста">Стишок про кота-программиста</button>
+    <button data-q="Объясни, как работают нейросети, простыми словами">Объясни нейросети просто</button>
+    <button data-q="Составь план тренировок на неделю для новичка">План тренировок на неделю</button>
   </div></div>`;
   msgs.querySelectorAll('.ex button').forEach(b=>b.onclick=()=>{$('#inp').value=b.dataset.q;autosize();send()});
 }
-function actsHtml(m){return m.role==='assistant'?`<div class="acts"><button class="icon-btn" data-reroll="1" title="Перегенерировать">↻</button><button class="icon-btn" data-copy="1" title="Копировать">📋</button><button class="icon-btn" data-share="1" title="Поделиться">📤</button></div>`:''}
+function actsHtml(m){return m.role==='assistant'?`<div class="acts"><button class="icon-btn" data-reroll="1" title="Перегенерировать">${ICON('refresh')}</button><button class="icon-btn" data-copy="1" title="Копировать">${ICON('copy')}</button><button class="icon-btn" data-share="1" title="Поделиться">${ICON('share')}</button></div>`:''}
 function bubbleNode(m,idx){
   const d=document.createElement('div');d.className='msg '+(m.role==='user'?'me':'ai');d.dataset.i=idx;
   let inner='';
@@ -353,11 +383,11 @@ function bubbleNode(m,idx){
     inner+='<div class="user-imgs">'+m.images.map(u=>`<a href="${u}" target="_blank"><img src="${u}"></a>`).join('')+'</div>';
   }
   if(m.role==='assistant'&&m.reasoning){
-    inner+=`<details class="think"><summary>🧠 Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`;
+    inner+=`<details class="think"><summary>Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`;
   }
   if(m.role==='user')inner+=`<div class="tx">${esc(m.content||'')}</div>`;
   else inner+=m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>';
-  if(m.err)inner+=`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`;
+  if(m.err)inner+=`<div class="msg-err">${esc(m.err)}</div><button class="retry" data-retry="1">Повторить</button>`;
   d.innerHTML=`<div class="bubble">${inner}</div>`+actsHtml(m);
   return d;
 }
@@ -375,20 +405,20 @@ function appendMsg(i){
 function paint(node,m,i){
   const b=node.querySelector('.bubble');
   b.innerHTML=(m.role==='user'&&m.images&&m.images.length?'<div class="user-imgs">'+m.images.map(u=>`<a href="${u}"><img src="${u}"></a>`).join('')+'</div>':'')
-   +(m.reasoning?`<details class="think"${m.err||streaming?'':' open'}><summary>🧠 Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`:'')
+   +(m.reasoning?`<details class="think"${m.err||streaming?'':' open'}><summary>Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`:'')
    +(m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>')
-   +(m.err?`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`:'');
+   +(m.err?`<div class="msg-err">${esc(m.err)}</div><button class="retry" data-retry="1">Повторить</button>`:'');
   node.querySelector('.acts')?.remove();
   node.insertAdjacentHTML('beforeend', actsHtml(m));
   decorate(b);
 }
 msgs.addEventListener('click',e=>{
   const cp=e.target.closest('.ccp');
-  if(cp){navigator.clipboard.writeText(cp.parentElement.querySelector('pre').textContent).then(()=>{cp.textContent='✓ копировано';setTimeout(()=>cp.textContent='✂ копировать',1500)});return}
+  if(cp){navigator.clipboard.writeText(cp.parentElement.querySelector('pre').textContent).then(()=>{cp.textContent='копировано';setTimeout(()=>cp.textContent='копировать',1500)});return}
   const cps=e.target.closest('[data-copy]');
-  if(cps){const n=cps.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){try{navigator.clipboard.writeText(c.messages[m].content);toast('📋 Скопировано')}catch(x){}}return}
+  if(cps){const n=cps.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){try{navigator.clipboard.writeText(c.messages[m].content);toast('Скопировано')}catch(x){}}return}
   const sh=e.target.closest('[data-share]');
-  if(sh){const n=sh.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){const t=c.messages[m].content||'';if(navigator.share){navigator.share({text:t}).catch(()=>{});return}try{navigator.clipboard.writeText(t);toast('📤 Не шарится — скопировано')}catch(x){}}return}
+  if(sh){const n=sh.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){const t=c.messages[m].content||'';if(navigator.share){navigator.share({text:t}).catch(()=>{});return}try{navigator.clipboard.writeText(t);toast('Не шарится — скопировано')}catch(x){}}return}
   const rt=e.target.closest('[data-retry]');
   if(rt){const c=cur();if(streaming)return;const i=lastErrIdx();if(i>=0){c.messages.splice(i,1);persist();renderMsgs();runGenerate()}return}
   const rr=e.target.closest('[data-reroll]');
@@ -405,14 +435,14 @@ function renderChats(){
   const l=$('#chatList');l.innerHTML='';
   chats.forEach(c=>{
     const d=document.createElement('div');d.className='ci'+(c.id===activeId?' act':'');
-    d.innerHTML=`<span class="ti">${esc(c.title)}</span><span class="cnt">${c.messages.length}</span><button class="del" title="Удалить">🗑</button>`;
+    d.innerHTML=`<span class="ti">${esc(c.title)}</span><span class="cnt">${c.messages.length}</span><button class="del" title="Удалить">${ICON('trash')}</button>`;
     d.onclick=()=>{activeId=c.id;persist();openDrawer(false);render()};
     d.querySelector('.del').onclick=ev=>{ev.stopPropagation();if(streaming)return;chats=chats.filter(x=>x.id!==c.id);if(activeId===c.id){if(chats[0])activeId=chats[0].id;else addChat(false)}persist();render()};
     l.appendChild(d);
   });
 }
 function addChat(silent=true){const c={id:uid(),title:'Новый чат',messages:[],t:Date.now()};chats.unshift(c);activeId=c.id;persist();if(!silent||drawer.classList.contains('open'))render();else render()}
-$('#newChat').onclick=()=>{if(streaming)return toast('Дождись ответа или нажми ■');addChat(false);openDrawer(false)};
+$('#newChat').onclick=()=>{if(streaming)return toast('Дождись ответа или нажми Стоп');addChat(false);openDrawer(false)};
 
 /* ============ отправка ============ */
 const inp=$('#inp'),sendBtn=$('#sendBtn'),stopBtn=$('#stopBtn');
@@ -426,7 +456,7 @@ function renderAtt(){
   const bar=$('#att');bar.hidden=!pending.length;bar.innerHTML='';
   pending.forEach((p,i)=>{
     const d=document.createElement('div');d.className='att';
-    d.innerHTML=p.img?`<img src="${p.img}"><button class="x">✕</button>`:`<span>📄</span><span class="nm">${esc(p.name)}</span><button class="x">✕</button>`;
+    d.innerHTML=p.img?`<img src="${p.img}"><button class="x">✕</button>`:ICON('file')+`<span class="nm">${esc(p.name)}</span><button class="x">✕</button>`;
     d.querySelector('.x').onclick=()=>{pending.splice(i,1);renderAtt();sendBtn.classList.toggle('ready',inp.value.trim()||pending.length)};
     bar.appendChild(d);
   });
@@ -456,7 +486,7 @@ function send(){
   const text=inp.value.trim();
   if(!text&&!pending.length)return;
   let content=text;
-  pending.filter(p=>p.name).forEach(p=>{content+=(content?'\n\n':'')+`📎 Файл: ${p.name}\n\`\`\`\n${p.text}\n\`\`\``});
+  pending.filter(p=>p.name).forEach(p=>{content+=(content?'\n\n':'')+`Файл: ${p.name}\n\`\`\`\n${p.text}\n\`\`\``});
   const imgs=pending.filter(p=>p.img).map(p=>p.img);
   c.messages.push({role:'user',content,images:imgs.length?imgs:undefined});
   if(c.title==='Новый чат')c.title=(text||'Фото').replace(/\s+/g,' ').slice(0,42);
@@ -475,7 +505,7 @@ stopBtn.onclick=()=>{if(ctrl)ctrl.abort()};
 async function runGenerate(){
   if(streaming)return;
   const c=cur();if(!c)return;
-  if(!S.apiKey&&S.provider!=='openrouter'){openSheet(true);toast('🔑 Введи API-ключ в настройках');return}
+  if(!S.apiKey&&S.provider!=='openrouter'){openSheet(true);toast('Введи API-ключ в настройках');return}
   const payload=apiPayload();
   const draft={role:'assistant',content:'',reasoning:'',err:null};
   c.messages.push(draft);
@@ -513,7 +543,7 @@ async function runGenerate(){
       draft.content=(m.content||'').trim();draft.reasoning=(m.reasoning_content||m.reasoning||'');
     }
   }catch(e){
-    if(e.name==='AbortError'){if(!draft.content&&!draft.reasoning)draft.err='⏹ Остановлено'}
+    if(e.name==='AbortError'){if(!draft.content&&!draft.reasoning)draft.err='Остановлено'}
     else draft.err=(e&&e.message?e.message:String(e))
   }
   if(!draft.content&&!draft.reasoning&&!draft.err)draft.content='(пустой ответ от модели)';
@@ -533,7 +563,7 @@ function downscale(url,name,asPng){
     cv.getContext('2d').drawImage(im,0,0,w,h);
     const out=cv.toDataURL(asPng?'image/png':'image/jpeg',0.78);
     pending.push({img:out,name:name});renderAtt();sendBtn.classList.add('ready');
-    toast('📷 добавлено — жми ➤');
+    toast('Добавлено — жми отправку');
   };
   im.src=url;
 }
@@ -588,8 +618,8 @@ $('#openSettings').onclick=()=>{openDrawer(false);openSheet(true)};
 $('#setClose').onclick=()=>openSheet(false);
 function saveS(){save('settings',S)}
 const HINTS={
-  openrouter:'⚡ Бесплатно: ключ с openrouter.ai → Keys. Бесплатные модели помечены «:free» (DeepSeek и др.).',
-  deepseek:'🇨🇳 Официальный API: платный, но очень дешёвый. Ключ с platform.deepseek.com.',
+  openrouter:'Бесплатно: ключ с openrouter.ai → Keys. Бесплатные модели помечены «:free» (DeepSeek и др.).',
+  deepseek:'Официальный API: платный, но очень дешёвый. Ключ с platform.deepseek.com.',
   custom:'Любой OpenAI-совместимый сервер: LM Studio, Ollama, llama.cpp, vLLM и т.п.'
 };
 function syncSettings(){
@@ -607,7 +637,7 @@ $('#sModel').oninput=()=>{S.model=$('#sModel').value.trim();saveS()};
 $('#sSys').oninput=()=>{S.system=$('#sSys').value;saveS()};
 $('#sTemp').oninput=()=>{S.temperature=$('#sTemp').value;$('#tempVal').textContent=S.temperature;saveS()};
 $('#loadModels').onclick=async()=>{
-  const b=$('#loadModels');const old=b.textContent;b.textContent='⏳ Загрузка…';b.disabled=true;
+  const b=$('#loadModels');const old=b.innerHTML;b.innerHTML='Загрузка…';b.disabled=true;
   try{
     let url,opts={};
     if(S.provider==='openrouter')url='https://openrouter.ai/api/v1/models';
@@ -619,8 +649,8 @@ $('#loadModels').onclick=async()=>{
     if(S.provider==='openrouter'){const free=ids.filter(i=>/:free$/.test(i));if(free.length){ids=free;toast('✓ Ключ ок. Бесплатных моделей: '+ids.length)}else toast('✓ Ключ ок. Моделей: '+ids.length+' (бесплатных нет)')}
     else toast('✓ Моделей загружено: '+ids.length);
     ids.sort();S.models=ids;saveS();syncSettings();
-  }catch(e){toast('✗ '+e.message)}
-  b.textContent=old;b.disabled=false;
+  }catch(e){toast('Ошибка: '+e.message)}
+  b.innerHTML=old;b.disabled=false;
 };
 $('#themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.theme=b.dataset.t;saveS();applyTheme()});
 
@@ -634,7 +664,7 @@ $('#themeSeg').addEventListener('touchstart',()=>{},{passive:true});
 $('#themeBtn').onclick=()=>{S.theme=S.theme==='auto'?'light':S.theme==='light'?'dark':'auto';saveS();applyTheme();toast('Тема: '+{auto:'авто',light:'светлая',dark:'тёмная'}[S.theme])};
 $('#btnExport').onclick=()=>{
   const blob=new Blob([JSON.stringify({chats,settings:Object.assign({},S,{apiKey:''})},null,1)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-chat-backup.json';a.click();toast('⬆️ Скачано');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='lotichat-backup.json';a.click();toast('Скачано');
 };
 $('#btnImport').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=e=>{
@@ -650,9 +680,10 @@ $('#importFile').onchange=e=>{
 $('#btnWipe').onclick=()=>{if(confirm('Точно удалить ВСЕ чаты и настройки?')){localStorage.clear();location.reload()}};
 
 /* ============ общая загрузка ============ */
-function render(){renderChats();const c=cur();$('#chatTitle').textContent=c?c.title:'AI Чат';renderMsgs()}
+function render(){renderChats();const c=cur();$('#chatTitle').textContent=c?c.title:'LotiChat';renderMsgs()}
 if(!chats.length||!cur()){const c={id:uid(),title:'Новый чат',messages:[],t:Date.now()};chats.push(c);activeId=c.id;persist()}
 syncSettings();applyTheme();render();
+document.querySelectorAll('[data-ic]').forEach(el=>el.insertAdjacentHTML('afterbegin',ICON(el.getAttribute('data-ic'))));
 window.__applyTheme=applyTheme;
 setInterval(()=>{if(streaming&&atBottom())msgs.scrollTop=msgs.scrollHeight},400);
 window.addEventListener('beforeunload',()=>{ctrl&&ctrl.abort()});
