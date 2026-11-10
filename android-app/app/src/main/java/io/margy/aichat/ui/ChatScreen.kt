@@ -79,7 +79,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
 import io.margy.aichat.data.GROQ_PRESETS
-import io.margy.aichat.data.MODEL_PRESETS
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.util.Media
@@ -914,7 +913,7 @@ private fun ImagePreviewDialog(path: String, onClose: () -> Unit) {
 private fun ModelPickerDialog(vm: ChatViewModel) {
     val presets = when (vm.settings.provider) {
         "groq" -> GROQ_PRESETS
-        else -> MODEL_PRESETS
+        else -> emptyList()
     }
     val all = vm.models.ifEmpty { presets }
     var query by remember { mutableStateOf("") }

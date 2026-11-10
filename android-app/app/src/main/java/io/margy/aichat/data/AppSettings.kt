@@ -4,7 +4,9 @@ import android.content.Context
 
 const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
+const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_GROQ = "groq"
+const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_CUSTOM = "custom"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки

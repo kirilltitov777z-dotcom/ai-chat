@@ -3,6 +3,7 @@ package io.margy.aichat.net
 import io.margy.aichat.data.AppSettings
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.PROVIDER_CUSTOM
+import io.margy.aichat.data.PROVIDER_DEEPSEEK
 import io.margy.aichat.data.PROVIDER_GROQ
 import io.margy.aichat.data.PROVIDER_OPENROUTER
 import io.margy.aichat.data.Role
