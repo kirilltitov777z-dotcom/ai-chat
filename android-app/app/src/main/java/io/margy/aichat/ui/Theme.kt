@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
-/** Акценты — палитра построена на фиолетовом, как у тебя в теме */
 val ACCENTS = listOf(
     Color(0xFF7C3AED), // фиолетовый
     Color(0xFF2563EB), // синий
@@ -35,29 +34,23 @@ val ACCENTS = listOf(
 
 val ACCENT_NAMES = listOf("Фиолетовый", "Синий", "Бирюзовый", "Зелёный", "Янтарный", "Розовый")
 
-// ---------- Светлая тема ----------
-
 private fun lightScheme(seed: Color) = lightColorScheme(
     primary = seed,
     onPrimary = Color.White,
     primaryContainer = lerp(Color(0xFFFFFFFF), seed, 0.14f),
     onPrimaryContainer = lerp(seed, Color(0xFF000000), 0.72f),
-
     secondary = lerp(seed, Color(0xFF000000), 0.22f),
     onSecondary = Color.White,
     secondaryContainer = lerp(Color(0xFFFFFFFF), seed, 0.08f),
     onSecondaryContainer = lerp(seed, Color(0xFF000000), 0.72f),
-
     tertiary = lerp(seed, Color(0xFFF59E0B), 0.55f),
     onTertiary = Color.White,
     tertiaryContainer = lerp(Color(0xFFFFFFFF), Color(0xFFF59E0B), 0.22f),
     onTertiaryContainer = Color(0xFF3B2600),
-
     error = Color(0xFFBA1A1A),
     onError = Color.White,
     errorContainer = Color(0xFFFFDAD6),
     onErrorContainer = Color(0xFF410002),
-
     background = Color(0xFFFCF8FF),
     onBackground = Color(0xFF1C1B20),
     surface = Color(0xFFFCF8FF),
@@ -71,7 +64,6 @@ private fun lightScheme(seed: Color) = lightColorScheme(
     outline = Color(0xFF79747E),
     outlineVariant = lerp(Color(0xFFFFFFFF), seed, 0.14f),
     scrim = Color(0xFF000000),
-
     surfaceContainerLowest = Color(0xFFFFFFFF),
     surfaceContainerLow = lerp(Color(0xFFFCF8FF), seed, 0.02f),
     surfaceContainer = lerp(Color(0xFFFCF8FF), seed, 0.045f),
@@ -79,29 +71,23 @@ private fun lightScheme(seed: Color) = lightColorScheme(
     surfaceContainerHighest = lerp(Color(0xFFFCF8FF), seed, 0.10f)
 )
 
-// ---------- Тёмная тема ----------
-
 private fun darkScheme(seed: Color) = darkColorScheme(
     primary = lerp(seed, Color.White, 0.45f),
     onPrimary = lerp(seed, Color.Black, 0.80f),
     primaryContainer = lerp(seed, Color.Black, 0.28f),
     onPrimaryContainer = lerp(seed, Color.White, 0.92f),
-
     secondary = lerp(seed, Color.White, 0.50f),
     onSecondary = Color.Black,
     secondaryContainer = lerp(seed, Color.Black, 0.32f),
     onSecondaryContainer = lerp(seed, Color.White, 0.90f),
-
     tertiary = lerp(seed, Color(0xFFFFD08A), 0.55f),
     onTertiary = lerp(seed, Color.Black, 0.80f),
     tertiaryContainer = lerp(seed, Color.Black, 0.30f),
     onTertiaryContainer = lerp(seed, Color(0xFFFFD08A), 0.95f),
-
     error = Color(0xFFFFB4AB),
     onError = Color(0xFF690005),
     errorContainer = Color(0xFF93000A),
     onErrorContainer = Color(0xFFFFDAD6),
-
     background = Color(0xFF121016),
     onBackground = Color(0xFFE6E1E9),
     surface = Color(0xFF121016),
@@ -115,15 +101,12 @@ private fun darkScheme(seed: Color) = darkColorScheme(
     outline = Color(0xFF938F99),
     outlineVariant = lerp(Color(0xFF121016), seed, 0.20f),
     scrim = Color(0xFF000000),
-
     surfaceContainerLowest = Color(0xFF0C0A10),
     surfaceContainerLow = Color(0xFF1A171F),
     surfaceContainer = Color(0xFF1E1B24),
     surfaceContainerHigh = Color(0xFF282530),
     surfaceContainerHighest = Color(0xFF33303B)
 )
-
-// ---------- Форма ----------
 
 private val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
@@ -133,81 +116,19 @@ private val AppShapes = Shapes(
     extraLarge = RoundedCornerShape(32.dp)
 )
 
-// ---------- Типографика (компактная) ----------
-
 private val AppTypography = Typography(
-    headlineLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        lineHeight = 36.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp
-    ),
-    headlineSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 19.sp,
-        lineHeight = 24.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
-    ),
-    titleSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 15.sp,
-        lineHeight = 21.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 13.sp,
-        lineHeight = 18.sp
-    ),
-    bodySmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
-        lineHeight = 18.sp
-    ),
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 15.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 10.sp,
-        lineHeight = 14.sp
-    )
+    headlineLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 36.sp),
+    headlineMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 30.sp),
+    headlineSmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp),
+    titleLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 19.sp, lineHeight = 24.sp),
+    titleMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, lineHeight = 22.sp),
+    titleSmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, fontSize = 14.sp, lineHeight = 20.sp),
+    bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 21.sp),
+    bodyMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp),
+    bodySmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 16.sp),
+    labelLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 18.sp),
+    labelMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 15.sp),
+    labelSmall = TextStyle(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Normal, fontSize = 10.sp, lineHeight = 14.sp)
 )
 
 @Composable

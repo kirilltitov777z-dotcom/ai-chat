@@ -6,14 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -49,12 +46,12 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun onUpdate(new: AppSettings) {
+    fun saveSettings(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
 
-    val tabs = listOf("Основное", "Модель", "Аккаунт", "Разработчик", "О приложении")
+    val tabs = listOf("Основное", "Модель", "Аккаунт", "О приложении")
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -75,7 +72,6 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Вкладки как чипсы
             Row(
                 Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -106,11 +102,10 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(12.dp))
 
             when (selectedTab) {
-                0 -> TabMain(s, ::onUpdate, keyVisible, context, vm)
-                1 -> TabModel(s, ::onUpdate, keyVisible, context, vm)
-                2 -> TabAccount(vm, ::onUpdate)
-                3 -> TabDeveloper(vm)
-                4 -> TabAbout(vm, context)
+                0 -> TabMain(s, ::saveSettings, keyVisible, context, vm)
+                1 -> TabModel(s, ::saveSettings, keyVisible, context, vm)
+                2 -> TabAccount(vm, ::saveSettings)
+                3 -> TabAbout(vm, context)
             }
 
             Spacer(Modifier.height(24.dp))
@@ -224,7 +219,7 @@ private fun TabModel(
                     onClick = {
                         if (s.provider != value) {
                             val next = s.copy(provider = value)
-                            onUpdate(next.copy(model = next.defaultModel()))
+                            saveSettings(next.copy(model = next.defaultModel()))
                         }
                     },
                     label = { Text(label) }
@@ -235,7 +230,7 @@ private fun TabModel(
         if (s.provider != PROVIDER_POLLINATIONS && s.provider != PROVIDER_LOCAL) {
             OutlinedTextField(
                 value = s.apiKey,
-                onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
+                onValueChange = { saveSettings(s.copy(apiKey = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("API-ключ") },
                 singleLine = true,
@@ -270,7 +265,7 @@ private fun TabModel(
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
                 value = s.baseUrl,
-                onValueChange = { onUpdate(s.copy(baseUrl = it.trim())) },
+                onValueChange = { saveSettings(s.copy(baseUrl = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Адрес сервера") },
                 placeholder = { Text("http://192.168.1.10:1234/v1") },
@@ -280,7 +275,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.model,
-            onValueChange = { onUpdate(s.copy(model = it.trim())) },
+            onValueChange = { saveSettings(s.copy(model = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Модель") },
             singleLine = true
@@ -307,7 +302,7 @@ private fun TabModel(
                                 else MaterialTheme.colorScheme.surfaceContainerLow,
                                 RoundedCornerShape(14.dp)
                             )
-                            .clickable { onUpdate(s.copy(model = id)) }
+                            .clickable { saveSettings(s.copy(model = id)) }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -454,77 +449,6 @@ private fun TabAccount(vm: ChatViewModel, onUpdate: (AppSettings) -> Unit) {
 }
 
 @Composable
-private fun TabDeveloper(vm: ChatViewModel) {
-    Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("Режим разработчика", style = MaterialTheme.typography.titleMedium)
-
-        if (!vm.devMode) {
-            Text(
-                "Секретный режим. Показывает все сообщения, даже если не в сети.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            var devPass by remember { mutableStateOf("") }
-            OutlinedTextField(
-                value = devPass,
-                onValueChange = { devPass = it },
-                label = { Text("Пароль разработчика") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Button(
-                onClick = {
-                    if (vm.tryDevLogin(devPass)) {
-                        vm.showToast("Режим разработчика включён")
-                    } else {
-                        vm.showToast("Неверный пароль")
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            ) {
-                Text("Войти в режим разработчика")
-            }
-        } else {
-            Text(
-                "Логи всех сообщений (включая офлайн):",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp, max = 360.dp)
-            ) {
-                items(vm.devLogs.reversed(), key = { it }) { log ->
-                    Text(
-                        text = log,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    HorizontalDivider(color = Color(0x00000000))
-                }
-            }
-            Button(
-                onClick = { vm.exitDevMode() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    contentColor = MaterialTheme.colorScheme.onSurface
-                )
-            ) {
-                Text("Выйти из режима разработчика")
-            }
-        }
-    }
-}
-
-@Composable
 private fun TabAbout(vm: ChatViewModel, context: Context) {
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
@@ -537,9 +461,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            "Бесплатный ИИ-чат для Android.\n" +
-                "Нативное приложение на Kotlin + Jetpack Compose.\n" +
-                "Поддерживает OpenRouter, Groq и локальную модель без инета.",
+            "Бесплатный ИИ-чат для Android.\nНативное приложение на Kotlin + Jetpack Compose.\nПоддерживает OpenRouter, Groq и локальную модель без инета.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -575,7 +497,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
         Spacer(Modifier.height(8.dp))
         Button(
             onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kirilltitov777z-dotcom/ai-chat"))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kirilltitov777z-dotcom.github.io/ai-chat/"))
                 runCatching {
                     context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
@@ -584,7 +506,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
         ) {
             Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
-            Text("GitHub репозиторий")
+            Text("Сайт приложения")
         }
 
         Button(
@@ -596,9 +518,9 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Rounded.FileDownload, null, Modifier.size(16.dp))
+            Icon(Icons.Rounded.Download, null, Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Скачать новую версию (Releases)")
+            Text("Скачать новую версию")
         }
     }
 }

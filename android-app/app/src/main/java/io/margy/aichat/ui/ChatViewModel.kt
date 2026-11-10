@@ -20,8 +20,6 @@ import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
 import io.margy.aichat.util.Media
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,11 +65,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         set
 
-    /// Лог для режима разработчика — все сообщения, даже если не в сети
     var devLogs by mutableStateOf<List<String>>(emptyList())
         private set
 
-    /// Экран входа/регистрации
     var showLogin by mutableStateOf(false)
         private set
 
@@ -265,7 +261,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Проверка реальной связи с сервером (DNS + ответ модели)
     fun checkConnection() {
         if (checkingKey) return
         viewModelScope.launch {
@@ -351,8 +346,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         updateSettings(settings.copy(devMode = false))
     }
 
-    // ---------- Аккаунт ----------
-
     fun registerAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
             toastMessage = "Введи логин и пароль"
@@ -408,8 +401,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         devLogs = devLogs + entry
     }
 
-    // ----------------------------------------------------------------
-
     private fun ensureChat(): String {
         val id = currentId
         if (id.isNotBlank() && chats.any { it.id == id }) return id
@@ -462,7 +453,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 val chatNow = chats.firstOrNull { it.id == chatId } ?: return@launch
                 val history = chatNow.messages.filter { it.id != aiId && !it.error }
 
-                // Локальная модель — без инета, без ключа
                 if (settings.provider == "local") {
                     runLocalReply(chatId, aiId, history.lastOrNull { it.role == Role.USER }?.text ?: "")
                     return@launch
@@ -553,7 +543,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Локальный ответчик без инета — для слабых устройств
     private fun runLocalReply(chatId: String, aiId: String, userText: String) {
         val response = localReply(userText)
         val chars = response.toCharArray()
@@ -592,7 +581,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         return when {
             t.isEmpty() -> "Напиши что-нибудь, я отвечу."
             t.contains("привет") || t.contains("здравств") || t.contains("хай") ->
-                "Привет! Я Loki — локальная модель. Работаю без интернета прямо на твоём устройстве."
+                "Привет! Я Loki — твой локальный ассистент. Работаю без инета прямо на телефоне."
             t.contains("кто ты") || t.contains("что такое локи") || t.contains("кто я") ->
                 "Я Loki — бесплатный ИИ-ассистент. Локальная версия для слабых устройств."
             t.contains("код") || t.contains("программ") || t.contains("python") || t.contains("kotlin") ||
@@ -600,13 +589,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 "Я помогу с программированием! Напиши, на каком языке нужен код, и что он должен делать."
             t.contains("как") || t.contains("почему") || t.contains("что такое") ||
             t.contains("объясни") || t.contains("расскажи") ->
-                "Отличный вопрос! Я локальная модель без интернета, поэтому мои знания ограничены. Опиши подробнее, и я попробую ответить из того, что знаю."
+                "Отличный вопрос! Я локальная модель без инета, мои знания ограничены. Опиши подробнее, и я попробую ответить из того, что знаю."
             t.contains("перевод") || t.contains("переведи") || t.contains("англий") ||
             t.contains("немецк") || t.contains("китайск") || t.contains("японск") ->
-                "Я могу попробовать перевести текст. Пришли фразу и укажи язык, на который переводить."
+                "Я могу попробовать перевести текст. Пришли фразу и укажи язык."
             t.contains("план") || t.contains("совет") || t.contains("задач") ||
             t.contains("рецепт") || t.contains("готовить") ->
-                "Я помогу составить план или дать совет. Расскажи подробнее, что тебе нужно."
+                "Я помогу составить план или дать совет. Расскажи подробнее, что нужно."
             t.contains("спасибо") || t.contains("благодар") || t.contains("спс") ->
                 listOf("Пожалуйста! Обращайся ещё.", "Рад был помочь! Что дальше?", "Всегда пожалуйста! Есть ещё вопросы?")
                     .toTypedArray()[java.util.Random().nextInt(3)]
@@ -615,26 +604,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "Пока! Буду рад пообщаться ещё.", "До скорого! Удачи!")
                     .toTypedArray()[java.util.Random().nextInt(3)]
             else ->
-                "Понял: «$text». Я Loki — локальная модель без интернета. Я могу отвечать на простые вопросы, помогать с текстом и кодом. Для более умных ответов подключи OpenRouter или Groq в настройках."
+                "Понял: «$text». Я Loki — локальная модель без инета. Я могу отвечать на простые вопросы, помогать с текстом и кодом. Для более умных ответов подключи OpenRouter или Groq в настройках."
         }
     }
 
-    // ----------------------------------------------------------------
-
-    private fun userQuery2(m: Message): String = buildString {
-        append(m.text)
-        m.attachments.filter { !it.isImage && it.text != null }.forEach {
-            append(" ").append(it.text!!.take(500))
-        }
-        m.attachments.filter { it.isImage }.forEach { append(" ").append(it.name) }
-    }.take(400)
-
-    // Перенаправляем на локальный userQuery из метода send? Ниже оставляем старый метод для совместимости, но он не используется.
-    private fun oldUserQuery(m: Message): String = buildString {
-        append(m.text)
-        m.attachments.filter { !it.isImage && it.text != null }.forEach {
-            append(" ").append(it.text!!.take(500))
-        }
-        m.attachments.filter { it.isImage }.forEach { append(" ").append(it.name) }
-    }.take(400)
+    private fun titleFrom(text: String, atts: List<Attachment>): String {
+        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
+        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
+    }
 }

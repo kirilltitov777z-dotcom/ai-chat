@@ -10,13 +10,9 @@ const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_LOCAL = "local"
 const val PROVIDER_CUSTOM = "custom"
 
-// Встроенный бесплатный ключ OpenRouter — работает сразу после установки
 const val DEFAULT_API_KEY = "sk-24bb60f46a5c4a108fcfad60aacd4270"
-
-// Модель по умолчанию называется Loki
 const val DEFAULT_MODEL = "openai"
 
-// Бесплатные модели Pollinations (без ключа вообще)
 val POLLINATIONS_PRESETS = listOf(
     "openai",
     "openai-fast",
@@ -29,7 +25,6 @@ val POLLINATIONS_PRESETS = listOf(
     "qwen-coder"
 )
 
-// Бесплатные модели Groq
 val GROQ_PRESETS = listOf(
     "llama-3.1-8b-instant",
     "gemma2-9b-it",
@@ -38,12 +33,9 @@ val GROQ_PRESETS = listOf(
     "mixtral-8x7b-32768"
 )
 
-// Локальные модели — работают БЕЗ интернета, для слабых устройств
 val LOCAL_PRESETS = listOf("local-mini")
 
-// Описание каждой модели — показывается мелким текстом под названием
 val MODEL_DESCRIPTIONS = mapOf(
-    // Pollinations (без ключа)
     "openai" to "Универсальная · бесплатно",
     "openai-fast" to "Самый быстрый ответ",
     "openai-large" to "Больше знаний, медленнее",
@@ -53,13 +45,11 @@ val MODEL_DESCRIPTIONS = mapOf(
     "llama-roblox" to "Лёгкая и быстрая",
     "micronet" to "Мини-размер, быстро",
     "qwen-coder" to "Специалист по коду",
-    // Groq
     "llama-3.1-8b-instant" to "Мгновенный ответ",
     "gemma2-9b-it" to "От Google, быстрая",
     "llama-3.2-3b-preview" to "Лёгкая, шустрая",
     "llama-3.2-1b-preview" to "Самая лёгкая",
     "mixtral-8x7b-32768" to "Длинная память",
-    // OpenRouter
     "deepseek/deepseek-chat-v3-0324:free" to "Китайский DeepSeek",
     "deepseek/deepseek-r1:free" to "С рассуждениями",
     "google/gemini-2.0-flash-exp:free" to "От Google, быстрая",
@@ -70,7 +60,6 @@ val MODEL_DESCRIPTIONS = mapOf(
     "nvidia/nemotron-70b-instruct:free" to "От NVIDIA, точная",
     "mistralai/mistral-7b-instruct:free" to "Компактная, шустрая",
     "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая",
-    // Локальные
     "local-mini" to "Без интернета · офлайн"
 )
 
@@ -97,7 +86,6 @@ data class AppSettings(
     fun defaultModel(): String = when (provider) {
         PROVIDER_GROQ -> GROQ_PRESETS.first()
         PROVIDER_LOCAL -> LOCAL_PRESETS.first()
-        PROVIDER_OPENROUTER -> DEFAULT_MODEL
         else -> DEFAULT_MODEL
     }
 
@@ -111,7 +99,7 @@ class SettingsStore(context: Context) {
 
     fun load(): AppSettings = AppSettings(
         provider = sp.getString("provider", PROVIDER_POLLINATIONS) ?: PROVIDER_POLLINATIONS,
-        apiKey = sp.getString("apiKey", DEFAULT_API_KEY).orEmpty(),
+        apiKey = sp.getString("apiKey", "").orEmpty(),
         model = sp.getString("model", DEFAULT_MODEL).orEmpty(),
         baseUrl = sp.getString("baseUrl", "").orEmpty(),
         system = sp.getString("system", DEFAULT_SYSTEM) ?: DEFAULT_SYSTEM,

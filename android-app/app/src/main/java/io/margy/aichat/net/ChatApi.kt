@@ -54,9 +54,7 @@ object ChatApi {
             s.apiKey,
             mapOf("X-Title" to "LotiChat")
         )
-        PROVIDER_LOCAL -> Endpoint(
-            "local://local", "", emptyMap()
-        )
+        PROVIDER_LOCAL -> Endpoint("local://local", "", emptyMap())
         PROVIDER_CUSTOM -> {
             val base = s.baseUrl.trim().trimEnd('/')
             val url = when {
@@ -78,7 +76,6 @@ object ChatApi {
         if (s.provider == "demo" || s.provider == "local") return current
         if (!thinking) return current
         return when (s.provider) {
-            PROVIDER_POLLINATIONS -> current
             PROVIDER_GROQ -> current
             PROVIDER_CUSTOM -> current
             else -> current

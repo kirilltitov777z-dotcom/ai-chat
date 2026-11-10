@@ -73,7 +73,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -845,7 +844,7 @@ private fun PendingChip(att: Attachment, onRemove: () -> Unit) {
 private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
     ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(Modifier.fillMaxHeight()) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
             Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,
@@ -871,7 +870,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(10.dp))
             NavigationDrawerItem(
                 label = { Text("Новый чат") },
                 icon = { Icon(Icons.Rounded.Add, null) },
@@ -879,7 +878,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 onClick = { vm.newChat(); close() },
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
-            HorizontalDivider(Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 18.dp, vertical = 8.dp))
             LazyColumn(Modifier.weight(1f)) {
                 items(vm.chats, key = { it.id }) { chat ->
                     NavigationDrawerItem(
