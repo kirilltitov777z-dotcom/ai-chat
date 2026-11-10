@@ -79,6 +79,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
 import io.margy.aichat.data.GROQ_PRESETS
+import io.margy.aichat.data.MODEL_DESCRIPTIONS
 import io.margy.aichat.data.POLLINATIONS_PRESETS
 import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.data.Message

@@ -69,11 +69,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         set
 
-    /// Лог для режима разработчика — ВСЕ сообщения пользователя и ответы
     var devLogs by mutableStateOf<List<String>>(emptyList())
         private set
 
-    /// Экран входа/регистрации
     var showLogin by mutableStateOf(false)
         private set
 
@@ -101,7 +99,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val isLoggedIn: Boolean
         get() = settings.accountLoggedIn && settings.accountUser.isNotBlank()
 
-    /// Версия приложения (для настроек «О приложении»)
     val appVersion: String
         get() = "1.0"
 
@@ -224,7 +221,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         launchReply(chatId, aiMsg.id, atts)
     }
 
-    /** Сразу прерывает текущий ответ */
     fun stop() {
         sendJob?.cancel()
         sendJob = null
@@ -272,7 +268,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Проверка реальной связи с сервером (тест DNS + сеть + ответ модели)
     fun checkConnection() {
         if (checkingKey) return
         viewModelScope.launch {
@@ -358,8 +353,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         updateSettings(settings.copy(devMode = false))
     }
 
-    // ---- Аккаунт ----
-
     fun registerAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
             toastMessage = "Введите логин и пароль"
@@ -410,12 +403,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun addDevLog(text: String) {
-        // Лог работает ВСЕГДА, даже не в режиме разработчика — разработчик всегда увидит
         val entry = "[${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}] $text"
         devLogs = devLogs + entry
     }
-
-    // ------------------------------------------------------------------
 
     private fun ensureChat(): String {
         val id = currentId
@@ -471,10 +461,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
                 val model = settings.model
 
-                // Локальный ответчик — без интернета
                 if (settings.provider == PROVIDER_LOCAL) {
                     var delta = StringBuilder()
-                    val response = localReply(chatNow.messages.filter { it.role == Role.USER }.lastOrNull()?.text ?: "")
+                    val response = localDemo(chatNow.messages.filter { it.role == Role.USER }.lastOrNull()?.text ?: "")
                     for (ch in response) {
                         delta.append(ch)
                         patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
@@ -535,7 +524,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     attempt(true)
                 } catch (e: ApiException) {
-                    // Реальная ошибка вместо шаблона — пользователь должен видеть причину
                     val errText = e.message?.take(300) ?: "Ошибка сети"
                     addDevLog("API error: $errText")
                     patchMessage(chatId, aiId) {
@@ -574,118 +562,54 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Локальный ответчик без ключа — динамические ответы, не заготовки
-    fun localDemo(userText: String): String {
-        val t = userText.trim().lowercase()
-        val words = t.split(" ").filter { it.isNotEmpty() }
-        val firstWord = words.firstOrNull() ?: ""
-        val secondWord = words.getOrNull(1) ?: ""
-
+    private fun localDemo(text: String): String {
+        val t = text.trim().lowercase()
         return when {
-            // Приветствие
             t.contains("привет") || t.contains("здравств") || t.contains("хай") || t.contains("добрый") -> {
                 val greetings = listOf(
-                    "Привет! Я Loki, ваш личный ассистент. Чем могу помочь сегодня?",
-                    "Здравствуйте! Готов ответить на ваши вопросы. О чём поговорим?",
-                    "Приветствую! Я Loki — бесплатный ИИ-ассистент. Задавайте любой вопрос."
+                    "Привет! Я Loki, ваш личный ассистент. Чем могу помочь?",
+                    "Здравствуйте! Готов ответить на вопросы.",
+                    "Приветствую! Я Loki — бесплатный ИИ-ассистент."
                 )
-                greetings[(userText.hashCode() and 0x7FFFFFFF) % greetings.size]
+                greetings[(text.hashCode() and 0x7FFFFFFF) % greetings.size]
             }
-
-            // Программирование
-            t.contains("код") || t.contains("программ") || t.contains("python") || t.contains("kotlin") ||
-            t.contains("java") || t.contains("javascript") || t.contains("js ") || t.contains("с++") ||
-            t.contains("html") || t.contains("css") -> {
-                "Я помогу с программированием! Напишите:\n" +
-                    "• На каком языке нужен код (Python, Kotlin, Java, JS, C++ и др.)\n" +
-                    "• Что именно должен делать код\n" +
-                    "• Есть ли уже пример, который нужно улучшить\n\n" +
-                    "Я напишу код с объяснениями."
+            t.contains("код") || t.contains("программ") -> {
+                "Я помогу с программированием. Напишите на каком языке нужен код."
             }
-
-            // Объяснение
-            t.contains("как") && (t.contains("работает") || t.contains("функц") || t.contains("устроен")) -> {
-                "Отличный вопрос! Чтобы я мог объяснить подробно, уточните:\n" +
-                    "• Какую именно тему или систему хотите понять\n" +
-                    "• Ваш уровень подготовки (новичок или продвинутый)\n" +
-                    "• Нужны ли примеры кода\n\n" +
-                    "Напишите, что именно explain, и я разберу по шагам."
+            t.contains("как") && t.contains("работает") -> {
+                "Объясню подробно. Напишите, что именно вас интересует."
             }
-
-            // Написать текст/статью
-            t.contains("напиши") || t.contains("составь") || t.contains("написать") || t.contains("эссе") ||
-            t.contains("статью") || t.contains("пост") || t.contains("реферат") -> {
-                "Я могу написать текст на любую тему! Укажите:\n" +
-                    "• Тему и цель текста\n" +
-                    "• Целевую аудиторию\n" +
-                    "• Примерный объём (коротко/подробно)\n" +
-                    "• Стиль (официальный, неформальный, юмористический)\n\n" +
-                    "Что будем писать?"
+            t.contains("напиши") || t.contains("составь") -> {
+                "Я могу написать текст на любую тему. Укажите тему."
             }
-
-            // Решение задач
-            t.contains("реши") || t.contains("задач") || t.contains("пример") || t.contains("уравнен") ||
-            t.contains("матем") || t.contains("алгебр") || t.contains("геометр") -> {
-                "Помогу решить задачу! Пришлите:\n" +
-                    "• Саму задачу или пример\n" +
-                    "• Что уже попробовали сделать\n" +
-                    "• Где возникла сложность\n\n" +
-                    "Я решу пошагово с объяснениями."
+            t.contains("план") || t.contains("совет") -> {
+                "Я помогу составить план. Расскажите подробнее."
             }
-
-            // Перевод
-            t.contains("перевод") || t.contains("переведи") || t.contains("англий") || t.contains("немецк") ||
-            t.contains("франц") || t.contains("китайск") || t.contains("японск") -> {
-                "Я помогу с переводом! Пришлите текст и укажите:\n" +
-                    "• С какого языка переводить\n" +
-                    "• На какой язык переводить\n" +
-                    "• Нужен ли буквальный или адаптированный перевод"
+            t.contains("кто ты") || t.contains("ты такой") -> {
+                "Я Loki — бесплатный ИИ-ассистент."
             }
-
-            // Планы и советы
-            t.contains("план") || t.contains("совет") || t.contains("рекомендац") || t.contains("как начать") ->
-                "Я помогу составить план или дать совет! Расскажите:\n" +
-                    "• О чём речь (тренировки, учёба, работа, поездка и т.д.)\n" +
-                    "• Ваши цели и ограничения\n" +
-                    "• Сколько времени у вас есть\n\n" +
-                    "Что планируем?"
+            t.contains("спасибо") || t.contains("благодар") -> {
+                "Пожалуйста! Обращайтесь ещё."
             }
-
-            // Про Loki / кто ты
-            t.contains("кто ты") || t.contains("ты такой") || t.contains("что такое локи") || t.contains("loki") ->
-                "Я Loki — ваш бесплатный ИИ-ассистент. Я работаю на базе открытых моделей через OpenRouter и Groq.\n" +
-                    "Могу помогать с:\n" +
-                    "• Ответами на вопросы\n" +
-                    "• Написанием текстов и кода\n" +
-                    "• Решением задач\n" +
-                    "• Переводами и объяснениями\n\n" +
-                    "Задавайте любой вопрос!"
-
-            // Благодарность
-            t.contains("спасибо") || t.contains("благодар") || t.contains("спс") ->
-                listOf(
-                    "Пожалуйста! Обращайтесь ещё.",
-                    "Рад был помочь! Что дальше?",
-                    "Всегда пожалуйста! Есть ещё вопросы?"
-                )[(userText.hashCode() and 0x7FFFFFFF) % 3]
-
-            // Прощание
-            t.contains("пока") || t.contains("до свидан") || t.contains("до встречи") || t.contains("прощай") ->
-                listOf(
-                    "До встречи! Обращайтесь, если понадобится помощь.",
-                    "Пока! Буду рад пообщаться ещё.",
-                    "До скорого! Удачи!"
-                )[(userText.hashCode() and 0x7FFFFFFF) % 3]
-
-            else ->
-                "Понял ваш вопрос: «$userText».\n\n" +
-                    "Я Loki — бесплатный ИИ-ассистент. Я могу помочь с:\n" +
-                    "• Ответами на вопросы по разным темам\n" +
-                    "• Написанием кода и текстов\n" +
-                    "• Решением задач и объяснением концепций\n" +
-                    "• Переводами и советами\n\n" +
-                    "Для более умных ответов с доступом к интернету настройте API-ключ OpenRouter или Groq в настройках.\n\n" +
-                    "Что именно вас интересует?"
+            t.contains("пока") || t.contains("до свидан") -> {
+                "До встречи!"
+            }
+            else -> {
+                "Понял ваш вопрос: «$text». Я Loki — бесплатный ИИ-ассистент."
+            }
         }
     }
+
+    private fun titleFrom(text: String, atts: List<Attachment>): String {
+        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
+        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
+    }
+
+    private fun userQuery(m: Message): String = buildString {
+        append(m.text)
+        m.attachments.filter { !it.isImage && it.text != null }.forEach {
+            append(" ").append(it.text!!.take(500))
+        }
+        m.attachments.filter { it.isImage }.forEach { append(" ").append(it.name) }
+    }.take(400)
 }

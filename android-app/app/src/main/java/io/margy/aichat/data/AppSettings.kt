@@ -6,6 +6,7 @@ const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный 
 
 const val PROVIDER_POLLINATIONS = "pollinations"
 const val PROVIDER_GROQ = "groq"
+const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_CUSTOM = "custom"
 const val PROVIDER_LOCAL = "local"
@@ -28,6 +29,55 @@ val POLLINATIONS_PRESETS = listOf(
     "micronet",
     "qwen-coder"
 )
+
+// Все модели OpenRouter для списка
+val MODEL_PRESETS = listOf(
+    "deepseek/deepseek-chat-v3-0324:free",
+    "deepseek/deepseek-r1:free",
+    "google/gemini-2.0-flash-exp:free",
+    "google/gemini-2.5-flash-preview:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "qwen/qwen-2.5-vl-72b-instruct:free",
+    "nvidia/nemotron-70b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "meta-llama/llama-3.1-8b-instruct:free"
+)
+
+// Описание каждой модели — показывается мелким текстом под названием
+val MODEL_DESCRIPTIONS = mapOf(
+    // Pollinations (без ключа)
+    "openai" to "Универсальная · быстрая",
+    "openai-fast" to "Самый быстрый ответ",
+    "openai-large" to "Больше знаний, медленнее",
+    "gpt-oss-20b" to "Открытая модель OpenAI",
+    "gpt-oss-120b" to "Самая умная, но тяжёлая",
+    "mistral" to "Сильная математика",
+    "llama-roblox" to "Лёгкая и быстрая",
+    "micronet" to "Мини-размер, быстро",
+    "qwen-coder" to "Специалист по коду",
+    // Groq
+    "llama-3.1-8b-instant" to "Мгновенный ответ",
+    "gemma2-9b-it" to "От Google, быстрая",
+    "llama-3.2-3b-preview" to "Лёгкая, шустрая",
+    "llama-3.2-1b-preview" to "Самая лёгкая",
+    "mixtral-8x7b-32768" to "Длинная память",
+    // OpenRouter
+    "deepseek/deepseek-chat-v3-0324:free" to "Китайский DeepSeek",
+    "deepseek/deepseek-r1:free" to "С рассуждениями",
+    "google/gemini-2.0-flash-exp:free" to "От Google, быстрая",
+    "google/gemini-2.5-flash-preview:free" to "Новая от Google",
+    "meta-llama/llama-3.3-70b-instruct:free" to "Универсальная, умная",
+    "qwen/qwen-2.5-72b-instruct:free" to "Мощная, с кодом",
+    "qwen/qwen-2.5-vl-72b-instruct:free" to "Понимает картинки",
+    "nvidia/nemotron-70b-instruct:free" to "От NVIDIA, точная",
+    "mistralai/mistral-7b-instruct:free" to "Компактная, шустрая",
+    "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая",
+    // Локальная
+    "local" to "Без интернета · для слабых устройств"
+)
+
+fun modelDescription(id: String): String = MODEL_DESCRIPTIONS[id] ?: ""
 
 // Бесплатные модели Groq
 val GROQ_PRESETS = listOf(
