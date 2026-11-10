@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -456,7 +458,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
     ) {
         Text("LokiChat", style = MaterialTheme.typography.titleLarge)
         Text(
-            "Версия 1.0",
+            "Версия 1.2",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -504,7 +506,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
+            Icon(Icons.Rounded.OpenInNew, null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text("Сайт приложения")
         }

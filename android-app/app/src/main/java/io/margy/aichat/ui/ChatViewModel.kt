@@ -25,6 +25,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -606,10 +608,5 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             else ->
                 "Понял: «$text». Я Loki — локальная модель без инета. Я могу отвечать на простые вопросы, помогать с текстом и кодом. Для более умных ответов подключи OpenRouter или Groq в настройках."
         }
-    }
-
-    private fun titleFrom(text: String, atts: List<Attachment>): String {
-        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
-        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
     }
 }
