@@ -106,9 +106,9 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(12.dp))
 
             when (selectedTab) {
-                0 -> TabMain(s, ::saveSettings, keyVisible, context, vm)
-                1 -> TabModel(s, ::saveSettings, keyVisible, context, vm)
-                2 -> TabAccount(vm, ::saveSettings)
+                0 -> TabMain(s, ::onUpdate, keyVisible, context, vm)
+                1 -> TabModel(s, ::onUpdate, keyVisible, context, vm)
+                2 -> TabAccount(vm, ::onUpdate)
                 3 -> TabDeveloper(vm)
                 4 -> TabAbout(vm, context)
             }
@@ -596,7 +596,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Icon(Icons.Rounded.Download, null, Modifier.size(16.dp))
+            Icon(Icons.Rounded.FileDownload, null, Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
             Text("Скачать новую версию (Releases)")
         }

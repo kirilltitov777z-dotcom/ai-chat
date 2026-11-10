@@ -21,6 +21,7 @@ import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
 import io.margy.aichat.util.Media
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

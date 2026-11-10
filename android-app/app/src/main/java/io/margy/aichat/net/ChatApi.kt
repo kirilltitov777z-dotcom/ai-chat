@@ -3,7 +3,6 @@ package io.margy.aichat.net
 import io.margy.aichat.data.AppSettings
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.PROVIDER_CUSTOM
-import io.margy.aichat.data.PROVIDER_DEEPSEEK
 import io.margy.aichat.data.PROVIDER_GROQ
 import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.data.PROVIDER_OPENROUTER
@@ -79,7 +78,7 @@ object ChatApi {
         if (s.provider == "demo" || s.provider == "local") return current
         if (!thinking) return current
         return when (s.provider) {
-            PROVIDER_DEEPSEEK -> "deepseek-reasoner"
+            PROVIDER_POLLINATIONS -> current
             PROVIDER_GROQ -> current
             PROVIDER_CUSTOM -> current
             else -> current
