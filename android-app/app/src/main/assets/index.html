@@ -9,10 +9,6 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" crossorigin="anonymous"></script>
-<script>window.marked||document.write('<script src="https://unpkg.com/marked@4.3.0/marked.min.js"><\/script>')</script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js" crossorigin="anonymous"></script>
-<script>window.DOMPurify||document.write('<script src="https://unpkg.com/dompurify@3.2.4/dist/purify.min.js"><\/script>')</script>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -100,6 +96,10 @@ details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padd
 .send-btn{width:44px;height:44px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--sc2);color:var(--muted);transition:background .2s,color .2s}
 .send-btn.ready{background:var(--accent);color:var(--accent-fg)}
 .send-btn:active{transform:scale(.94)}
+.mini{width:36px;height:44px;border-radius:14px;color:var(--muted);display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:background .2s,color .2s}
+.mini svg.ic{width:19px;height:19px}
+.mini.on{background:var(--surface-a);color:var(--app-fg)}
+.mini:active{transform:scale(.94)}
 .menu{position:absolute;bottom:76px;left:10px;background:var(--sc2);border-radius:20px;padding:7px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:35;min-width:210px}
 .menu button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:14px;text-align:left;font-size:15px}
 .menu button:active{background:var(--sc3)}
@@ -198,6 +198,8 @@ span[data-ic]{display:inline-flex;width:22px;height:22px;align-items:center;just
   <div class="inpbar">
     <button class="icon-btn" id="attBtn" style="color:var(--muted)"><span data-ic="plus"></span></button>
     <textarea id="inp" rows="1" placeholder="Сообщение…"></textarea>
+    <button class="mini" id="brainBtn" title="Мышление (Reasoning)"><span data-ic="bulb"></span></button>
+    <button class="mini" id="webBtn" title="Поиск в интернете"><span data-ic="globe"></span></button>
     <button class="send-btn" id="sendBtn"><span data-ic="send"></span></button>
     <button class="send-btn" id="stopBtn" hidden style="background:var(--sc2);color:var(--err)"><span data-ic="stop"></span></button>
   </div>
@@ -305,6 +307,8 @@ const ICONS={
   share:'M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13',
   trash:'M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6',
   refresh:'M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8M21 3v5h-5',
+  bulb:'M15 14c.2-1 .7-1.7 1.5-2.5A6 6 0 1 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4',
+  globe:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
   logo:'M12 3c4.97 0 9 3.22 9 7.2S16.97 17.4 12 17.4c-1.06 0-2.08-.15-3.02-.42l-3.48 1.62 1.2-3.36C4.4 13.9 3 11.9 3 10.2 3 6.2 7.03 3 12 3z'
 };
 function ICON(n){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[n]||ICONS.logo)+'"/></svg>'}
@@ -337,20 +341,43 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(S.t
 /* ============ markdown ============ */
 function miniMd(t){
   t=esc(t).replace(/\r/g,'');
-  t=t.replace(/```[\w-]*\n([\s\S]*?)```/g,(m,c)=>'<pre><code>'+c.replace(/\n$/,'')+'</code></pre>');
+  t=t.replace(/```([\w-]*)\n([\s\S]*?)```/g,(m,l,c)=>'<pre><code>'+c.replace(/\n$/,'')+'</code></pre>');
   t=t.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+  t=t.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,:!?]|$)/g,'$1<i>$2</i>');
+  t=t.replace(/~~([^~]+)~~/g,'<s>$1</s>');
+  t=t.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  t=t.replace(/(^|[\s>])(https?:\/\/[^\s<]+)/g,'$1<a href="$2" target="_blank" rel="noopener">$2</a>');
   t=t.replace(/^###\s?(.+)$/gm,'<h3>$1</h3>').replace(/^##\s?(.+)$/gm,'<h2>$1</h2>').replace(/^#\s?(.+)$/gm,'<h1>$1</h1>');
-  t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g,'$1<i>$2</i>');
-  t=t.replace(/^\s*[-•]\s+(.+)$/gm,'<li>$1</li>').replace(/^\s*\d+\.\s+(.+)$/gm,'<li>$1</li>');
-  return t.split(/\n{2,}/).map(p=>/^<(pre|h\d|ul|ol)/.test(p)?p:'<p>'+p+'</p>').join('');
+  t=t.replace(/^&gt;\s?(.+)$/gm,'<blockquote>$1</blockquote>');
+  t=t.replace(/^---+\s*$/gm,'<hr>');
+  t=t.replace(/^\s*[-•]\s+(.+)$/gm,'<li>$1</li>');
+  t=t.replace(/^\s*\d+\.\s+(.+)$/gm,'<li num>$1</li>');
+  t=t.replace(/(^\|.+\|\n)+/gm,(block)=>{
+    const rows=block.trim().split('\n').map(r=>r.replace(/^\||\|$/g,'').split('|').map(c=>c.trim()));
+    if(rows.length&&/^:?-{3,}:?$/.test(rows[1]&&rows[1][0]||''))rows.splice(1,1);
+    let h='<table>';
+    rows.forEach((r,i)=>{
+      let cells=r.map(c=>'<'+(i===0?'th':'td')+'>'+c+'</'+(i===0?'th':'td')+'>').join('');
+      h+='<tr>'+cells+'</tr>';
+    });
+    return h+'</table>';
+  });
+  return t.split(/\n{2,}/).map(p=>{
+    let s=p.trim();
+    if(!s)return '';
+    if(/^(<pre|<h\d|<ul|<ol|<table|<blockquote|<hr)/.test(s))return s;
+    if(s.indexOf('<li')>=0){
+      const i=s.indexOf('<li');
+      const pre=s.slice(0,i).trim();
+      let rest=s.slice(i).replace(/<li num>/g,'<li>');
+      rest='<ul>'+rest.replace(/<\/li>\s*\n?\s*(?=<li)/g,'</li>')+'</ul>';
+      return (pre?'<p>'+pre.replace(/\n/g,'<br>')+'</p>':'')+rest;
+    }
+    return '<p>'+s.replace(/\n/g,'<br>')+'</p>';
+  }).filter(Boolean).join('');
 }
 function md(t){
-  try{
-    if(window.marked&&window.DOMPurify){
-      let h=DOMPurify.sanitize(marked.parse(t,{breaks:true,gfm:true}),{ADD_ATTR:['target']});
-      return h;
-    }
-  }catch(e){}
   return miniMd(t);
 }
 function decorate(node){
@@ -497,6 +524,34 @@ function send(){
   runGenerate();
 }
 sendBtn.onclick=send;
+/* мини-переключатели: мышление + веб-поиск */
+let brainOn=!!S.brain, webOn=!!S.web;
+$('#brainBtn').classList.toggle('on',brainOn);
+$('#webBtn').classList.toggle('on',webOn);
+$('#brainBtn').onclick=()=>{brainOn=!brainOn;S.brain=brainOn;saveS();$('#brainBtn').classList.toggle('on',brainOn);toast(brainOn?'Мышление включено — отвечает модель с рассуждением':'Мышление выключено')};
+$('#webBtn').onclick=()=>{webOn=!webOn;S.web=webOn;saveS();$('#webBtn').classList.toggle('on',webOn);toast(webOn?'Поиск в интернете включён (Wikipedia/DuckDuckGo)':'Поиск выключен')};
+async function webSearch(q){
+  if(!q||!q.trim())return '';
+  const race=u=>Promise.race([fetch(u),new Promise((res,rj)=>setTimeout(()=>rj(new Error('медленно')),6000))]);
+  const qq=q.trim().slice(0,240);
+  try{
+    const r=await race('https://api.duckduckgo.com/?q='+encodeURIComponent(qq)+'&format=json&no_html=1&skip_disambig=1');
+    const j=await r.json();
+    let out=(j.AbstractText||j.Abstract||'').trim();
+    (j.RelatedTopics||[]).slice(0,4).forEach(t=>{if(t.Text)out+='\n• '+t.Text});
+    if(out.trim().length>60)return out.slice(0,1400);
+  }catch(e){}
+  try{
+    const r=await race('https://ru.wikipedia.org/w/api.php?action=query&list=search&srsearch='+encodeURIComponent(qq)+'&format=json&origin=*&srlimit=3');
+    const j=await r.json();
+    const hits=(j.query&&j.query.search)||[];
+    if(!hits.length)return '';
+    let out='';
+    hits.forEach(h=>{out+='* '+h.title+': '+String(h.snippet||'').replace(/<[^>]+>/g,'')+'\n'});
+    return out.slice(0,1600);
+  }catch(e){}
+  return '';
+}
 function setBusy(v){
   streaming=v;sendBtn.hidden=v;stopBtn.hidden=!v;
   $('#newChat').disabled=v;
@@ -507,6 +562,19 @@ async function runGenerate(){
   const c=cur();if(!c)return;
   if(!S.apiKey&&S.provider!=='openrouter'){openSheet(true);toast('Введи API-ключ в настройках');return}
   const payload=apiPayload();
+  let model=S.model;
+  if(brainOn){
+    if(S.provider==='openrouter'&&model&&!/r1|reasoner|thinking|qwq|o[13]/i.test(model))model='deepseek/deepseek-r1:free';
+    else if(S.provider==='deepseek')model='deepseek-reasoner';
+  }
+  if(webOn){
+    try{
+      const lastUser=[...payload].reverse().find(m=>m.role==='user');
+      const q=lastUser?(typeof lastUser.content==='string'?lastUser.content:''):'';
+      const ctx=await webSearch(q.replace(/Файл:[\s\S]*$/,''));
+      if(ctx&&ctx.trim())payload.splice(1,0,{role:'system',content:'Актуальные данные из интернета (Wikipedia/DuckDuckGo), можешь опираться на них:\n'+ctx});
+    }catch(e){}
+  }
   const draft={role:'assistant',content:'',reasoning:'',err:null};
   c.messages.push(draft);
   const node=appendMsg(c.messages.length-1);
@@ -514,7 +582,7 @@ async function runGenerate(){
   const cfg=endpoint();
   let last=0;
   try{
-    const res=await fetch(cfg.url,{method:'POST',signal:ctrl.signal,headers:Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},cfg.extra||{}),body:JSON.stringify({model:S.model,messages:payload,stream:true,temperature:+S.temperature})});
+    const res=await fetch(cfg.url,{method:'POST',signal:ctrl.signal,headers:Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},cfg.extra||{}),body:JSON.stringify({model:model,messages:payload,stream:true,temperature:+S.temperature})});
     if(!res.ok){let d='';try{d=(await res.text()).slice(0,300)}catch(e){};throw new Error('HTTP '+res.status+(d?' — '+d:''))}
     const ct=(res.headers.get('content-type')||'').toLowerCase();
     if(res.body&&ct.includes('event-stream')){

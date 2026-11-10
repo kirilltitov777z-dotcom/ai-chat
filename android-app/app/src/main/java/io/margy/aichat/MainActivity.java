@@ -166,6 +166,13 @@ public class MainActivity extends Activity {
         } else {
             web.loadUrl(START_URL);
         }
+
+        // сброс кэша при обновлении версии, чтобы страница не осталась старой
+        android.content.SharedPreferences sp = getPreferences(MODE_PRIVATE);
+        if (!"1.3".equals(sp.getString("ver", ""))) {
+            web.clearCache(true);
+            sp.edit().putString("ver", "1.3").apply();
+        }
     }
 
     private boolean isDark() {
