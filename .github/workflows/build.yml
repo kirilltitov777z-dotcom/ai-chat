@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'website/**'
 
 jobs:
   apk:
@@ -50,11 +51,11 @@ jobs:
           if gh release view apk >/dev/null 2>&1; then
             gh release upload apk LokiChat.apk --clobber
             gh release edit apk --latest \
-              --title "LokiChat 1.0 — APK" \
-              --notes "LokiChat 1.0 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), свой DNS-резолвер, адаптивная иконка, Material You 3."
+              --title "LokiChat 1.2 — APK" \
+              --notes "LokiChat 1.2 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), локальная модель без инета, новый логотип атом, настройки, GitHub Pages сайт."
           else
             gh release create apk LokiChat.apk \
-              --title "LokiChat 1.0 — APK" \
-              --notes "LokiChat 1.0 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), свой DNS-резолвер, адаптивная иконка, Material You 3." \
+              --title "LokiChat 1.2 — APK" \
+              --notes "LokiChat 1.2 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), локальная модель без инета, новый логотип атом, настройки, GitHub Pages сайт." \
               --latest
           fi
