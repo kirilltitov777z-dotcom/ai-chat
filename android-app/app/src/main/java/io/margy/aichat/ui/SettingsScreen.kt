@@ -25,8 +25,6 @@ import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Tabs
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +46,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun saveSettings(new: AppSettings) {
+    fun onUpdate(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
@@ -143,7 +141,7 @@ private fun TabMain(
             ).forEach { (value, label) ->
                 FilterChip(
                     selected = s.themeMode == value,
-                    onClick = { saveSettings(s.copy(themeMode = value)) },
+                    onClick = { onUpdate(s.copy(themeMode = value)) },
                     label = { Text(label) }
                 )
             }
@@ -159,7 +157,7 @@ private fun TabMain(
                     Modifier
                         .size(36.dp)
                         .background(color, CircleShape)
-                        .clickable { saveSettings(s.copy(accent = index, dynamicColor = false)) },
+                        .clickable { onUpdate(s.copy(accent = index, dynamicColor = false)) },
                     contentAlignment = Alignment.Center
                 ) {
                     if (s.accent == index) {
@@ -173,7 +171,7 @@ private fun TabMain(
             title = "Цвета системы",
             subtitle = "Подхватить палитру с обоев телефона",
             checked = s.dynamicColor,
-            onChange = { saveSettings(s.copy(dynamicColor = it)) }
+            onChange = { onUpdate(s.copy(dynamicColor = it)) }
         )
     }
 }
@@ -204,7 +202,7 @@ private fun TabModel(
                     onClick = {
                         if (s.provider != value) {
                             val next = s.copy(provider = value)
-                            saveSettings(next.copy(model = next.defaultModel()))
+                            onUpdate(next.copy(model = next.defaultModel()))
                         }
                     },
                     label = { Text(label) }
@@ -214,7 +212,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.apiKey,
-            onValueChange = { saveSettings(s.copy(apiKey = it.trim())) },
+            onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API-ключ") },
             singleLine = true,
@@ -232,7 +230,7 @@ private fun TabModel(
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
                 value = s.baseUrl,
-                onValueChange = { saveSettings(s.copy(baseUrl = it.trim())) },
+                onValueChange = { onUpdate(s.copy(baseUrl = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Адрес сервера") },
                 placeholder = { Text("http://192.168.1.10:1234/v1") },
@@ -242,7 +240,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.model,
-            onValueChange = { saveSettings(s.copy(model = it.trim())) },
+            onValueChange = { onUpdate(s.copy(model = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Модель") },
             singleLine = true
@@ -261,7 +259,7 @@ private fun TabModel(
                 presets.forEach { id ->
                     AssistChip(
                         selected = s.model == id,
-                        onClick = { saveSettings(s.copy(model = id)) },
+                        onClick = { onUpdate(s.copy(model = id)) },
                         label = { Text(id.substringAfterLast('/'), maxLines = 1) }
                     )
                 }
