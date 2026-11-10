@@ -287,7 +287,6 @@ object ChatApi {
                     val base = s.baseUrl.trim().trimEnd('/')
                     if (base.isBlank()) "" else "$base/models"
                 }
-                s.provider == PROVIDER_DEEPSEEK -> "https://api.deepseek.com/models"
                 s.provider == PROVIDER_GROQ -> "https://api.groq.com/openai/v1/models"
                 else -> "https://openrouter.ai/api/v1/models"
             }

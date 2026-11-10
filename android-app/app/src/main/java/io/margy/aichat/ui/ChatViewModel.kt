@@ -20,6 +20,7 @@ import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
 import io.margy.aichat.util.Media
+import okhttp3.MediaType.Companion.toMediaType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -284,9 +285,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         .url(ep.url)
                         .header("Content-Type", "application/json")
                         .apply { if (ep.key.isNotBlank()) header("Authorization", "Bearer ${ep.key}") }
-                        .post(body.toString().toRequestBody(
-                            okhttp3.MediaType.Companion.toMediaType("application/json")
-                        ))
+                        .post(body.toString().toRequestBody("application/json".toMediaType()))
                         .build()
                     val resp = ChatApi.http.newCall(req).execute()
                     resp.use {
@@ -561,9 +560,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         sendJob = viewModelScope.launch {
             busy = true
             try {
-                while (pos < chars.length) {
-                    val step = chars.length.coerceAtMost(pos + 6)
-                    delta = chars.subArray(pos, step).joinToString("")
+                while (pos < chars.size) {
+                    val step = chars.size.coerceAtMost(pos + 6)
+                    val snippet = chars.copyOfRange(pos, step).joinToString("")
+                    delta.append(snippet)
                     patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
                     pos = step
                     withContext(Dispatchers.Main) {
@@ -619,11 +619,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // ----------------------------------------------------------------
-
-    private fun titleFrom(text: String, atts: List<Attachment>): String {
-        val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
-        return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
-    }
 
     private fun userQuery2(m: Message): String = buildString {
         append(m.text)

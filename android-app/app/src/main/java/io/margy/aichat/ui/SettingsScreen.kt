@@ -6,12 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -27,7 +31,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -43,7 +49,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun saveSettings(new: AppSettings) {
+    fun onUpdate(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
@@ -218,7 +224,7 @@ private fun TabModel(
                     onClick = {
                         if (s.provider != value) {
                             val next = s.copy(provider = value)
-                            saveSettings(next.copy(model = next.defaultModel()))
+                            onUpdate(next.copy(model = next.defaultModel()))
                         }
                     },
                     label = { Text(label) }
@@ -229,7 +235,7 @@ private fun TabModel(
         if (s.provider != PROVIDER_POLLINATIONS && s.provider != PROVIDER_LOCAL) {
             OutlinedTextField(
                 value = s.apiKey,
-                onValueChange = { saveSettings(s.copy(apiKey = it.trim())) },
+                onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("API-ключ") },
                 singleLine = true,
@@ -264,7 +270,7 @@ private fun TabModel(
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
                 value = s.baseUrl,
-                onValueChange = { saveSettings(s.copy(baseUrl = it.trim())) },
+                onValueChange = { onUpdate(s.copy(baseUrl = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Адрес сервера") },
                 placeholder = { Text("http://192.168.1.10:1234/v1") },
@@ -274,7 +280,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.model,
-            onValueChange = { saveSettings(s.copy(model = it.trim())) },
+            onValueChange = { onUpdate(s.copy(model = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Модель") },
             singleLine = true
@@ -301,7 +307,7 @@ private fun TabModel(
                                 else MaterialTheme.colorScheme.surfaceContainerLow,
                                 RoundedCornerShape(14.dp)
                             )
-                            .clickable { saveSettings(s.copy(model = id)) }
+                            .clickable { onUpdate(s.copy(model = id)) }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
