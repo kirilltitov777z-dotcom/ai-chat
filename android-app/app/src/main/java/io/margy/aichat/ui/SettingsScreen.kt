@@ -283,11 +283,11 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             }
 
             Section("Вложения") {
-                SettingSwitch(
-                    title = "Отправлять картинки модели",
-                    subtitle = "Если модель без зрения — автоматически отправлю без картинок",
-                    checked = s.sendImages
-                ) { set(s.copy(sendImages = it)) }
+                Text(
+                    "Картинки и файлы всегда включены",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Section("Данные") {
