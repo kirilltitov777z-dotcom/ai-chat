@@ -72,24 +72,28 @@ object Net {
     }
 
     /** Основной резолвер OkHttp */
-    val dns: Dns = Dns { hostname ->
-        // 1) Системный DNS — но только IPv4
-        val system = runCatching { InetAddress.getAllByName(hostname) }.getOrDefault(emptyArray())
-        val systemV4 = system.filter { it is java.net.Inet4Address }
-        if (systemV4.isNotEmpty()) return@Dns systemV4
+    val dns: Dns = object : Dns {
+        @Throws(java.net.UnknownHostException::class)
+        override fun lookup(hostname: String): List<InetAddress> {
+            // 1) Системный DNS — но только IPv4
+            val system = runCatching { InetAddress.getAllByName(hostname) }.getOrDefault(emptyArray())
+            val systemV4 = system.filter { it is java.net.Inet4Address }
+            if (systemV4.isNotEmpty()) return systemV4
 
-        // 2) DoH по raw IP
-        val doh = resolveDoh(hostname)
-        if (doh.isNotEmpty()) return@Dns doh
+            // 2) DoH по raw IP (обходит сломанный системный DNS)
+            val doh = resolveDoh(hostname)
+            if (doh.isNotEmpty()) return doh
 
-        // 3) Запасные IP
-        val fb = FALLBACK_IPS[hostname]?.mapNotNull { runCatching { InetAddress.getByName(it) }.getOrNull() }
-        if (!fb.isNullOrEmpty()) return@Dns fb
+            // 3) Запасные IP
+            val fb = FALLBACK_IPS[hostname]
+                ?.mapNotNull { runCatching { InetAddress.getByName(it) }.getOrNull() }
+            if (!fb.isNullOrEmpty()) return fb
 
-        // 4) Хоть что-то из системного (даже IPv6)
-        if (system.isNotEmpty()) return@Dns system
+            // 4) Хоть что-то из системного (даже IPv6)
+            if (system.isNotEmpty()) return system
 
-        throw UnknownHostException("Не удалось найти адрес: $hostname")
+            throw java.net.UnknownHostException("Не удалось найти адрес: $hostname")
+        }
     }
 
     /** Проверка связи с хостом (для теста в настройках) */

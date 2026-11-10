@@ -283,9 +283,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         .url(ep.url)
                         .header("Content-Type", "application/json")
                         .apply { if (ep.key.isNotBlank()) header("Authorization", "Bearer ${ep.key}") }
-                        .post(body.toString().toRequestBody(
-                            okhttp3.MediaType.Companion.toMediaType("application/json")
-                        ))                        .build()
+                        .post(body.toString().toRequestBody("application/json".toMediaType()))
+                        .build()
                     val resp = ChatApi.http.newCall(req).execute()
                     resp.use {
                         val txt = it.body?.string().orEmpty()
