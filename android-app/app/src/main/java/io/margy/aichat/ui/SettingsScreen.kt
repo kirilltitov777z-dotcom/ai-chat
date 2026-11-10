@@ -235,7 +235,7 @@ private fun TabModel(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API-ключ") },
             singleLine = true,
-            visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (keyVisibleLocal) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { keyVisibleLocal = !keyVisibleLocal }) {
                     Icon(
