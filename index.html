@@ -289,7 +289,7 @@ const ACCENTS=[['Фиолетовый',-1],['Синий',217],['Бирюзовы
 const cur=()=>chats.find(c=>c.id===activeId);
 
 /* ============ тема ============ */
-function dark(){return S.theme==='dark'||(S.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches)}
+function dark(){return S.theme==='dark'||(S.theme==='auto'&&(matchMedia('(prefers-color-scheme: dark)').matches||window.__MARGY_DARK===true))}
 function applyTheme(){
   const r=document.documentElement;
   r.dataset.theme=dark()?'light':'dark'; r.dataset.theme=dark()?'dark':'light';
@@ -345,6 +345,7 @@ function renderHero(){
   </div></div>`;
   msgs.querySelectorAll('.ex button').forEach(b=>b.onclick=()=>{$('#inp').value=b.dataset.q;autosize();send()});
 }
+function actsHtml(m){return m.role==='assistant'?`<div class="acts"><button class="icon-btn" data-reroll="1" title="Перегенерировать">↻</button><button class="icon-btn" data-copy="1" title="Копировать">📋</button><button class="icon-btn" data-share="1" title="Поделиться">📤</button></div>`:''}
 function bubbleNode(m,idx){
   const d=document.createElement('div');d.className='msg '+(m.role==='user'?'me':'ai');d.dataset.i=idx;
   let inner='';
@@ -357,7 +358,7 @@ function bubbleNode(m,idx){
   if(m.role==='user')inner+=`<div class="tx">${esc(m.content||'')}</div>`;
   else inner+=m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>';
   if(m.err)inner+=`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`;
-  d.innerHTML=`<div class="bubble">${inner}</div>`+(m.role==='assistant'&&!m.err?`<div class="acts"><button class="icon-btn" data-reroll="1" title="Перегенерировать">↻</button></div>`:'');
+  d.innerHTML=`<div class="bubble">${inner}</div>`+actsHtml(m);
   return d;
 }
 function renderMsgs(){
@@ -378,12 +379,16 @@ function paint(node,m,i){
    +(m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>')
    +(m.err?`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`:'');
   node.querySelector('.acts')?.remove();
-  if(m.role==='assistant'&&!m.err){const a=document.createElement('div');a.className='acts';a.innerHTML='<button class="icon-btn" data-reroll="1" title="Перегенерировать">↻</button>';node.appendChild(a)}
+  node.insertAdjacentHTML('beforeend', actsHtml(m));
   decorate(b);
 }
 msgs.addEventListener('click',e=>{
   const cp=e.target.closest('.ccp');
   if(cp){navigator.clipboard.writeText(cp.parentElement.querySelector('pre').textContent).then(()=>{cp.textContent='✓ копировано';setTimeout(()=>cp.textContent='✂ копировать',1500)});return}
+  const cps=e.target.closest('[data-copy]');
+  if(cps){const n=cps.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){try{navigator.clipboard.writeText(c.messages[m].content);toast('📋 Скопировано')}catch(x){}}return}
+  const sh=e.target.closest('[data-share]');
+  if(sh){const n=sh.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){const t=c.messages[m].content||'';if(navigator.share){navigator.share({text:t}).catch(()=>{});return}try{navigator.clipboard.writeText(t);toast('📤 Не шарится — скопировано')}catch(x){}}return}
   const rt=e.target.closest('[data-retry]');
   if(rt){const c=cur();if(streaming)return;const i=lastErrIdx();if(i>=0){c.messages.splice(i,1);persist();renderMsgs();runGenerate()}return}
   const rr=e.target.closest('[data-reroll]');
@@ -458,6 +463,7 @@ function send(){
   inp.value='';autosize();sendBtn.classList.remove('ready');pending=[];renderAtt();persist();renderChats();
   $('#chatTitle').textContent=c.title;
   appendMsg(c.messages.length-1);
+  navigator.vibrate&&navigator.vibrate(12);
   runGenerate();
 }
 sendBtn.onclick=send;
@@ -512,6 +518,7 @@ async function runGenerate(){
   }
   if(!draft.content&&!draft.reasoning&&!draft.err)draft.content='(пустой ответ от модели)';
   setBusy(false);ctrl=null;persist();paint(node,draft);msgs.scrollTop=msgs.scrollHeight;
+  navigator.vibrate&&navigator.vibrate(20);
 }
 function atBottom(){return msgs.scrollHeight-msgs.scrollTop-msgs.clientHeight<90}
 msgs.addEventListener('scroll',()=>{});
@@ -646,6 +653,7 @@ $('#btnWipe').onclick=()=>{if(confirm('Точно удалить ВСЕ чаты
 function render(){renderChats();const c=cur();$('#chatTitle').textContent=c?c.title:'AI Чат';renderMsgs()}
 if(!chats.length||!cur()){const c={id:uid(),title:'Новый чат',messages:[],t:Date.now()};chats.push(c);activeId=c.id;persist()}
 syncSettings();applyTheme();render();
+window.__applyTheme=applyTheme;
 setInterval(()=>{if(streaming&&atBottom())msgs.scrollTop=msgs.scrollHeight},400);
 window.addEventListener('beforeunload',()=>{ctrl&&ctrl.abort()});
 </script>

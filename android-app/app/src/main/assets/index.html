@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141218">
+<meta name="description" content="ИИ чат на бесплатных моделях (DeepSeek через OpenRouter) в стиле Material You">
+<title>AI Чат</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js" crossorigin="anonymous"></script>
+<script>window.marked||document.write('<script src="https://unpkg.com/marked@4.3.0/marked.min.js"><\/script>')</script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js" crossorigin="anonymous"></script>
+<script>window.DOMPurify||document.write('<script src="https://unpkg.com/dompurify@3.2.4/dist/purify.min.js"><\/script>')</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+:root{
+  --app-bg:#141218;--app-fg:#e6e0e9;--muted:#cac4d0;--outline:#49454f;
+  --sc1:#211f26;--sc2:#2b2930;--sc3:#36343b;
+  --accent:hsl(262 76% 77%);--accent-fg:hsl(262 100% 17%);
+  --surface-a:hsl(262 30% 28%);
+  --err:#ffb4ab;
+  --nav:0px;
+}
+[data-theme="light"]{
+  --app-bg:#fef7ff;--app-fg:#1d1b20;--muted:#49454f;--outline:#79747e;
+  --sc1:#f3edf7;--sc2:#e7e0ec;--sc3:#dcd4df;
+  --accent:hsl(262 60% 46%);--accent-fg:#fff;
+  --surface-a:hsl(262 55% 90%);
+  --err:#904a42;
+}
+body{margin:0;font:15px/1.5 Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--app-bg);color:var(--app-fg);display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea,select{font:inherit;color:var(--app-fg)}
+img{max-width:100%}
+
+/* ---- app bar ---- */
+.appbar{height:64px;flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:0 10px;padding-top:env(safe-area-inset-top);z-index:20}
+.appbar .logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--surface-a));display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+.appbar h1{font-size:19px;font-weight:500;margin:0 0 0 10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.icon-btn{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto;transition:background .15s}
+.icon-btn:active{background:var(--sc2)}
+
+/* ---- messages ---- */
+#msgs{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:4px 0 12px;scroll-behavior:smooth}
+.msg{display:flex;margin:10px 12px;gap:8px;align-items:flex-start}
+.msg.me{flex-direction:row-reverse}
+.bubble{max-width:88%;padding:12px 15px;border-radius:20px;overflow-wrap:anywhere;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.me .bubble{background:var(--accent);color:var(--accent-fg);border-bottom-right-radius:6px;white-space:pre-wrap}
+.ai .bubble{background:var(--sc1);border-bottom-left-radius:6px}
+.user-imgs{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
+.user-imgs img{max-width:180px;border-radius:12px;display:block}
+.bubble p{margin:.4em 0}
+.bubble h1,.bubble h2,.bubble h3,.bubble h4{margin:.6em 0 .3em;line-height:1.3}
+.bubble h1{font-size:1.35em}.bubble h2{font-size:1.2em}.bubble h3{font-size:1.05em}
+.bubble ul,.bubble ol{margin:.4em 0;padding-left:1.4em}
+.bubble blockquote{margin:.5em 0;padding:2px 12px;border-left:3px solid var(--outline);color:var(--muted)}
+.bubble table{border-collapse:collapse;margin:.5em 0;font-size:.92em;display:block;overflow-x:auto;max-width:100%}
+.bubble td,.bubble th{border:1px solid var(--outline);padding:5px 9px}
+.bubble a{color:var(--accent);text-decoration:underline}
+.me .bubble a{color:inherit}
+.bubble code{font:13px/1.5 ui-monospace,monospace;background:var(--sc3);padding:1px 6px;border-radius:7px}
+.me .bubble code{background:rgba(255,255,255,.22)}
+.bubble hr{border:0;border-top:1px solid var(--outline);margin:.8em 0}
+.code{position:relative;margin:.6em 0}
+.code pre{margin:0;background:var(--sc3);border-radius:14px;padding:12px 12px;overflow-x:auto;font:13px/1.45 ui-monospace,consolas,monospace;color:var(--app-fg)}
+.ccp{position:absolute;top:6px;right:6px;font-size:12px;background:var(--sc1);color:var(--muted);border-radius:8px;padding:3px 9px;opacity:.7}
+.ccp:active{opacity:1}
+details.think{margin-bottom:8px;font-size:13.5px;color:var(--muted)}
+details.think summary{cursor:pointer;user-select:none;font-weight:500;color:var(--accent);outline:none}
+details.think .thbody{white-space:pre-wrap;max-height:240px;overflow-y:auto;padding:6px 2px;background:var(--sc2);border-radius:10px;margin-top:6px}
+.dots{display:inline-flex;gap:5px;padding:6px 0}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--muted);animation:bl 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+.msg-err{margin-top:6px;font-size:13.5px;color:var(--err);background:var(--sc2);border-radius:12px;padding:8px 10px}
+.retry{display:inline-flex;margin-top:7px;background:var(--sc2);color:var(--app-fg);border-radius:12px;padding:6px 14px;font-size:13.5px}
+.acts{display:flex;gap:4px;margin-left:2px}
+.acts .icon-btn{width:32px;height:32px;font-size:15px;opacity:.55}
+.hero{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:24px;gap:8px}
+.hero .big{font-size:46px}
+.hero h2{margin:.2em;font-size:20px;font-weight:500}
+.hero p{margin:.1em;color:var(--muted);max-width:340px}
+.hero .ex{display:flex;flex-direction:column;gap:9px;margin-top:14px;width:100%;max-width:340px}
+.hero .ex button{background:var(--sc1);border-radius:16px;padding:12px 16px;text-align:left;transition:background .15s}
+.hero .ex button:active{background:var(--sc2)}
+
+/* ---- composer ---- */
+.composer{flex:0 0 auto;padding:6px 10px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--app-bg) 28%)}
+#att{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scrollbar-width:none}
+#att::-webkit-scrollbar{display:none}
+.att{position:relative;flex:0 0 auto;display:flex;align-items:center;gap:6px;background:var(--sc1);border-radius:12px;padding:5px 30px 5px 5px;font-size:13px;max-width:190px}
+.att img{width:38px;height:38px;object-fit:cover;border-radius:8px}
+.att .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;color:var(--muted)}
+.att .x{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--sc2)}
+.inpbar{display:flex;align-items:flex-end;gap:4px;background:var(--sc1);border-radius:28px;padding:5px 5px 5px 6px}
+.inpbar textarea{flex:1;background:none;border:0;outline:0;resize:none;max-height:132px;min-height:24px;padding:10px 4px}
+.send-btn{width:44px;height:44px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:20px;background:var(--sc2);color:var(--muted);transition:background .2s,color .2s}
+.send-btn.ready{background:var(--accent);color:var(--accent-fg)}
+.send-btn:active{transform:scale(.94)}
+.menu{position:absolute;bottom:76px;left:10px;background:var(--sc2);border-radius:20px;padding:7px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:35;min-width:210px}
+.menu button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:14px;text-align:left;font-size:15px}
+.menu button:active{background:var(--sc3)}
+
+/* ---- drawer ---- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:28;opacity:0;transition:opacity .22s}
+.scrim.show{opacity:1}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:320px;max-width:86%;background:var(--sc1);z-index:30;transform:translateX(-102%);transition:transform .25s;display:flex;flex-direction:column;border-radius:0 26px 26px 0;padding:14px 10px calc(10px + env(safe-area-inset-bottom))}
+.drawer.open{transform:none}
+.drawer-head{display:flex;align-items:center;gap:11px;padding:env(safe-area-inset-top) 12px 16px;font-size:18px;font-weight:500}
+.drawer-head .logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--surface-a));display:flex;align-items:center;justify-content:center;font-size:20px}
+#newChat{margin:0 6px 12px;background:var(--surface-a);color:var(--app-fg);border-radius:20px;padding:12px;font-weight:500}
+#newChat:active{background:var(--accent)}
+#chatList{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.ci{display:flex;align-items:center;gap:8px;padding:11px 12px;border-radius:26px;cursor:pointer;transition:background .15s}
+.ci.act{background:var(--sc2)}
+.ci:active{background:var(--sc3)}
+.ci .ti{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
+.ci .cnt{font-size:12px;color:var(--muted)}
+.ci .del{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);flex:0 0 auto}
+.drawer-foot{border-top:1px solid var(--outline);margin-top:8px;padding-top:8px}
+.drawer-link{display:flex;align-items:center;gap:14px;padding:13px 14px;border-radius:26px;font-size:15px}
+.drawer-link:active{background:var(--sc2)}
+
+/* ---- sheet (настройки) ---- */
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:90dvh;background:var(--sc1);border-radius:28px 28px 0 0;z-index:40;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s}
+.sheet.open{transform:none}
+.sheet header{display:flex;align-items:center;gap:8px;padding:16px 12px 10px;flex:0 0 auto}
+.sheet header .grab{width:32px;height:4px;border-radius:4px;background:var(--outline);position:absolute;top:8px;left:50%;transform:translateX(-50%)}
+.sheet h2{font-size:19px;font-weight:500;margin:0 0 0 4px;flex:1}
+.sheet-body{overflow-y:auto;padding:0 18px calc(20px + env(safe-area-inset-bottom))}
+.sheet h3{font-size:13px;font-weight:600;color:var(--accent);margin:20px 0 8px;text-transform:uppercase;letter-spacing:.6px}
+.fld{display:block;margin:10px 0}
+.fld>span{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.fld input:not([type=range]),.fld textarea,.fld select{width:100%;background:var(--app-bg);border:1px solid var(--outline);border-radius:14px;padding:11px 13px;outline:none}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:44px}
+.row-key{display:flex;gap:6px}
+.row-key input{flex:1;min-width:0}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--sc2);color:var(--app-fg);border-radius:20px;padding:11px 18px;font-weight:500;transition:background .15s}
+.btn:active{background:var(--sc3)}
+.btn.primary{background:var(--surface-a);color:var(--app-fg)}
+.btn.wide{width:100%}
+.btn.danger{color:var(--err);background:transparent;border:1px solid var(--err)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.seg{display:flex;background:var(--app-bg);border-radius:24px;padding:4px;gap:4px}
+.seg button{flex:1;padding:9px 14px;border-radius:18px;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--surface-a);color:var(--app-fg)}
+.swatches{display:flex;gap:12px;padding:4px}
+.sw{width:38px;height:38px;border-radius:50%;border:2px solid transparent;flex:0 0 auto}
+.sw.on{border-color:var(--app-fg);box-shadow:0 0 0 3px var(--sc1) inset}
+
+/* ---- camera ---- */
+#cam{position:fixed;inset:0;background:#000;z-index:70;display:flex;flex-direction:column}
+#camV{flex:1;width:100%;object-fit:cover;min-height:0}
+.cam-bar{flex:0 0 auto;display:flex;align-items:center;justify-content:space-around;padding:16px 0 calc(16px + env(safe-area-inset-bottom));background:#000}
+.cam-bar .ic{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center}
+.shutter{width:72px;height:72px;border-radius:50%;background:#fff;border:5px solid rgba(255,255,255,.35);box-sizing:border-box}
+.shutter:active{transform:scale(.92)}
+
+/* ---- snack ---- */
+#snack{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);background:var(--sc3);color:var(--app-fg);padding:11px 20px;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.4);z-index:80;opacity:0;pointer-events:none;transition:all .25s;max-width:88%;text-align:center}
+#snack.show{opacity:1;transform:translateX(-50%)}
+[hidden]{display:none!important}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</head>
+<body>
+
+<header class="appbar">
+  <button class="icon-btn" id="menuBtn">☰</button>
+  <div class="logo">✨</div>
+  <h1 id="chatTitle">AI Чат</h1>
+  <button class="icon-btn" id="themeBtn" title="Тема">🌗</button>
+  <button class="icon-btn" id="setBtn">⚙️</button>
+</header>
+
+<main id="msgs"></main>
+
+<div class="composer">
+  <div id="att" hidden></div>
+  <div class="menu" id="attMenu" hidden>
+    <button id="mPhoto">📷 Сделать фото</button>
+    <button id="mGallery">🖼 Фото из галереи</button>
+    <button id="mFile">📎 Прикрепить файл</button>
+  </div>
+  <div class="inpbar">
+    <button class="icon-btn" id="attBtn" style="color:var(--muted)">➕</button>
+    <textarea id="inp" rows="1" placeholder="Сообщение…"></textarea>
+    <button class="send-btn" id="sendBtn">➤</button>
+    <button class="send-btn" id="stopBtn" hidden style="background:var(--sc2);color:var(--err)">■</button>
+  </div>
+</div>
+
+<div class="scrim" id="drawerScrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head"><div class="logo">✨</div>AI Чат</div>
+  <button id="newChat" class="btn">＋&nbsp; Новый чат</button>
+  <div id="chatList"></div>
+  <div class="drawer-foot">
+    <button class="drawer-link" id="openSettings">⚙️ Настройки</button>
+  </div>
+</aside>
+
+<div class="scrim" id="setScrim"></div>
+<section class="sheet" id="sheet">
+  <header><div class="grab"></div><h2>⚙️ Настройки</h2><button class="icon-btn" id="setClose">✕</button></header>
+  <div class="sheet-body">
+    <h3>🧠 ИИ</h3>
+    <label class="fld"><span>Провайдер</span>
+      <select id="sProv">
+        <option value="openrouter">OpenRouter — бесплатные модели</option>
+        <option value="deepseek">DeepSeek API (официальный)</option>
+        <option value="custom">Свой OpenAI-совместимый сервер</option>
+      </select>
+    </label>
+    <p class="hint" id="provHint"></p>
+    <label class="fld"><span>API-ключ</span>
+      <div class="row-key">
+        <input id="sKey" type="password" placeholder="sk-…" autocomplete="off">
+        <button class="icon-btn" id="keyEye" style="background:var(--app-bg);border-radius:14px">👁</button>
+      </div>
+    </label>
+    <p class="hint">🔑 OpenRouter: регистрируешься на openrouter.ai → Keys → Create Key. Это бесплатно, бесплатные модели помечены «:free».</p>
+    <label class="fld" id="baseRow" hidden><span>Базовый URL</span><input id="sBase" type="text" placeholder="https://localhost:1234/v1" spellcheck="false"></label>
+    <label class="fld"><span>Модель</span>
+      <input id="sModel" list="modelList" placeholder="deepseek/deepseek-chat-v3-0324:free" spellcheck="false">
+      <datalist id="modelList"></datalist>
+    </label>
+    <div class="row"><button class="btn" id="loadModels">⬇️ Проверить ключ и загрузить модели</button></div>
+    <label class="fld"><span>Системный промпт (характер бота)</span><textarea id="sSys" rows="3"></textarea></label>
+    <label class="fld"><span>Температура (креатив): <b id="tempVal">0.7</b></span><input id="sTemp" type="range" min="0" max="1.5" step="0.1"></label>
+
+    <h3>🎨 Внешний вид</h3>
+    <div class="row seg" id="themeSeg">
+      <button data-t="auto">Авто</button><button data-t="light">Светлая</button><button data-t="dark">Тёмная</button>
+    </div>
+    <p class="hint">Цвет акцента</p>
+    <div class="swatches" id="accents"></div>
+
+    <h3>💾 Данные</h3>
+    <div class="row">
+      <button class="btn" id="btnExport">⬆️ Экспорт чатов</button>
+      <button class="btn" id="btnImport">⬇️ Импорт</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <div class="row"><button class="btn wide danger" id="btnWipe">🗑 Удалить все чаты и настройки</button></div>
+    <p class="hint">Всё хранится локально в браузере телефона. Ключ отправляется только выбранному ИИ-серверу. Тайм-аутов нет — ответы приходят стримом, пока модель не закончит.</p>
+  </div>
+</section>
+
+<div id="cam" hidden>
+  <video id="camV" autoplay playsinline muted></video>
+  <div class="cam-bar">
+    <button class="ic" id="camFlip">🔄</button>
+    <button class="shutter" id="camShot"></button>
+    <button class="ic" id="camClose">✕</button>
+  </div>
+</div>
+
+<div id="snack"></div>
+
+<input type="file" id="galleryInput" accept="image/*" multiple hidden>
+<input type="file" id="photoInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="fileInput" multiple hidden>
+
+<script src="sw-reg.js" defer></script>
+<script>
+'use strict';
+/* ============ утилиты ============ */
+const $=s=>document.querySelector(s);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const load=(k,d)=>{try{const v=localStorage.getItem('aichat.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem('aichat.'+k,JSON.stringify(v))}catch(e){toast('⚠ Память браузера переполнена — удали старые чаты с фото')}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let toastT=0;
+function toast(t){const e=$('#snack');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('show'),2600)}
+
+/* ============ состояние ============ */
+const DEF={provider:'openrouter',apiKey:'',baseUrl:'',model:'deepseek/deepseek-chat-v3-0324:free',system:'Ты — дружелюбный и умный ассистент. Отвечай кратко и по делу на русском, если не попросили иначе. Форматируй ответ Markdown-ом.',temperature:0.7,theme:'auto',accent:-1,models:[]};
+let S=Object.assign({},DEF,load('settings',{}));
+let chats=load('chats',[]);
+let activeId=load('active',null);
+let streaming=false,ctrl=null,pending=[];
+const ACCENTS=[['Фиолетовый',-1],['Синий',217],['Бирюзовый',185],['Зелёный',150],['Оранжевый',30],['Розовый',336]];
+const cur=()=>chats.find(c=>c.id===activeId);
+
+/* ============ тема ============ */
+function dark(){return S.theme==='dark'||(S.theme==='auto'&&(matchMedia('(prefers-color-scheme: dark)').matches||window.__MARGY_DARK===true))}
+function applyTheme(){
+  const r=document.documentElement;
+  r.dataset.theme=dark()?'light':'dark'; r.dataset.theme=dark()?'dark':'light';
+  const i=ACCENTS.findIndex(a=>a[1]===S.accent); const hue=S.accent<0?262:S.accent;
+  const a=dark()?`hsl(${hue} 76% 77%)`:`hsl(${hue} 60% 46%)`;
+  const f=dark()?`hsl(${hue} 100% 17%)`:'#fff';
+  const sa=dark()?`hsl(${hue} 26% 28%)`:`hsl(${hue} 60% 91%)`;
+  r.style.setProperty('--accent',a);r.style.setProperty('--accent-fg',f);r.style.setProperty('--surface-a',sa);
+  $('#themeSeg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===S.theme));
+  document.querySelectorAll('.sw').forEach(b=>b.classList.toggle('on',+b.dataset.hue===S.accent));
+  const mt=document.querySelector('meta[name=theme-color]'); if(mt) mt.content=dark()?'#141218':'#fef7ff';
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(S.theme==='auto')applyTheme()});
+
+/* ============ markdown ============ */
+function miniMd(t){
+  t=esc(t).replace(/\r/g,'');
+  t=t.replace(/```[\w-]*\n([\s\S]*?)```/g,(m,c)=>'<pre><code>'+c.replace(/\n$/,'')+'</code></pre>');
+  t=t.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+  t=t.replace(/^###\s?(.+)$/gm,'<h3>$1</h3>').replace(/^##\s?(.+)$/gm,'<h2>$1</h2>').replace(/^#\s?(.+)$/gm,'<h1>$1</h1>');
+  t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?]|$)/g,'$1<i>$2</i>');
+  t=t.replace(/^\s*[-•]\s+(.+)$/gm,'<li>$1</li>').replace(/^\s*\d+\.\s+(.+)$/gm,'<li>$1</li>');
+  return t.split(/\n{2,}/).map(p=>/^<(pre|h\d|ul|ol)/.test(p)?p:'<p>'+p+'</p>').join('');
+}
+function md(t){
+  try{
+    if(window.marked&&window.DOMPurify){
+      let h=DOMPurify.sanitize(marked.parse(t,{breaks:true,gfm:true}),{ADD_ATTR:['target']});
+      return h;
+    }
+  }catch(e){}
+  return miniMd(t);
+}
+function decorate(node){
+  node.querySelectorAll('pre').forEach(pre=>{
+    if(pre.parentElement.classList.contains('code'))return;
+    const w=document.createElement('div');w.className='code';
+    const b=document.createElement('button');b.className='ccp';b.textContent='✂ копировать';
+    pre.replaceWith(w);w.appendChild(pre);w.appendChild(b);
+  });
+  node.querySelectorAll('a').forEach(a=>{a.target='_blank';a.rel='noopener'});
+}
+
+/* ============ рендер чата ============ */
+const msgs=$('#msgs');
+function renderHero(){
+  msgs.innerHTML=`<div class="hero"><div class="big">✨</div><h2>Привет! Я твой ИИ</h2>
+  <p>Работаю на бесплатных моделях DeepSeek через OpenRouter. Настрой ключ в ⚙️ и общайся — тайм-аутов нет.</p>
+  <div class="ex">
+    <button data-q="Напиши смешной стих про кота-программиста">🐱 Стишок про кота-программиста</button>
+    <button data-q="Объясни, как работают нейросети, простыми словами">🧠 Объясни нейросети просто</button>
+    <button data-q="Составь план тренировок на неделю для новичка">💪 План тренировок на неделю</button>
+  </div></div>`;
+  msgs.querySelectorAll('.ex button').forEach(b=>b.onclick=()=>{$('#inp').value=b.dataset.q;autosize();send()});
+}
+function actsHtml(m){return m.role==='assistant'?`<div class="acts"><button class="icon-btn" data-reroll="1" title="Перегенерировать">↻</button><button class="icon-btn" data-copy="1" title="Копировать">📋</button><button class="icon-btn" data-share="1" title="Поделиться">📤</button></div>`:''}
+function bubbleNode(m,idx){
+  const d=document.createElement('div');d.className='msg '+(m.role==='user'?'me':'ai');d.dataset.i=idx;
+  let inner='';
+  if(m.role==='user'&&m.images&&m.images.length){
+    inner+='<div class="user-imgs">'+m.images.map(u=>`<a href="${u}" target="_blank"><img src="${u}"></a>`).join('')+'</div>';
+  }
+  if(m.role==='assistant'&&m.reasoning){
+    inner+=`<details class="think"><summary>🧠 Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`;
+  }
+  if(m.role==='user')inner+=`<div class="tx">${esc(m.content||'')}</div>`;
+  else inner+=m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>';
+  if(m.err)inner+=`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`;
+  d.innerHTML=`<div class="bubble">${inner}</div>`+actsHtml(m);
+  return d;
+}
+function renderMsgs(){
+  const c=cur();
+  if(!c||!c.messages.length){renderHero();return}
+  msgs.innerHTML='';
+  c.messages.forEach((m,i)=>{const n=bubbleNode(m,i);msgs.appendChild(n);decorate(n.querySelector('.tx'))});
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function appendMsg(i){
+  const c=cur();if(c.messages.length===1&&c.messages[0].role==='user')msgs.innerHTML='';
+  const n=bubbleNode(c.messages[i],i);msgs.appendChild(n);msgs.scrollTop=msgs.scrollHeight;return n;
+}
+function paint(node,m,i){
+  const b=node.querySelector('.bubble');
+  b.innerHTML=(m.role==='user'&&m.images&&m.images.length?'<div class="user-imgs">'+m.images.map(u=>`<a href="${u}"><img src="${u}"></a>`).join('')+'</div>':'')
+   +(m.reasoning?`<details class="think"${m.err||streaming?'':' open'}><summary>🧠 Мышление модели</summary><div class="thbody">${esc(m.reasoning)}</div></details>`:'')
+   +(m.content?`<div class="tx">${md(m.content)}</div>`:'<div class="dots"><i></i><i></i><i></i></div>')
+   +(m.err?`<div class="msg-err">⚠️ ${esc(m.err)}</div><button class="retry" data-retry="1">↻ Повторить</button>`:'');
+  node.querySelector('.acts')?.remove();
+  node.insertAdjacentHTML('beforeend', actsHtml(m));
+  decorate(b);
+}
+msgs.addEventListener('click',e=>{
+  const cp=e.target.closest('.ccp');
+  if(cp){navigator.clipboard.writeText(cp.parentElement.querySelector('pre').textContent).then(()=>{cp.textContent='✓ копировано';setTimeout(()=>cp.textContent='✂ копировать',1500)});return}
+  const cps=e.target.closest('[data-copy]');
+  if(cps){const n=cps.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){try{navigator.clipboard.writeText(c.messages[m].content);toast('📋 Скопировано')}catch(x){}}return}
+  const sh=e.target.closest('[data-share]');
+  if(sh){const n=sh.closest('.msg');const m=+(n?.dataset.i||-1);const c=cur();if(c&&c.messages[m]){const t=c.messages[m].content||'';if(navigator.share){navigator.share({text:t}).catch(()=>{});return}try{navigator.clipboard.writeText(t);toast('📤 Не шарится — скопировано')}catch(x){}}return}
+  const rt=e.target.closest('[data-retry]');
+  if(rt){const c=cur();if(streaming)return;const i=lastErrIdx();if(i>=0){c.messages.splice(i,1);persist();renderMsgs();runGenerate()}return}
+  const rr=e.target.closest('[data-reroll]');
+  if(rr&&!streaming){const c=cur();const i=[...msgs.querySelectorAll('.msg')].indexOf(rr.closest('.msg'));if(i>=0){c.messages.splice(i);persist();renderMsgs();runGenerate()}}
+});
+function lastErrIdx(){const c=cur();for(let i=c.messages.length-1;i>=0;i--)if(c.messages[i].err)return i;return -1}
+
+/* ============ drawer ============ */
+const drawer=$('#drawer'),dscrim=$('#drawerScrim');
+function openDrawer(v){drawer.classList.toggle('open',v);dscrim.classList.toggle('show',v)}
+$('#menuBtn').onclick=()=>openDrawer(true);
+dscrim.onclick=()=>openDrawer(false);
+function renderChats(){
+  const l=$('#chatList');l.innerHTML='';
+  chats.forEach(c=>{
+    const d=document.createElement('div');d.className='ci'+(c.id===activeId?' act':'');
+    d.innerHTML=`<span class="ti">${esc(c.title)}</span><span class="cnt">${c.messages.length}</span><button class="del" title="Удалить">🗑</button>`;
+    d.onclick=()=>{activeId=c.id;persist();openDrawer(false);render()};
+    d.querySelector('.del').onclick=ev=>{ev.stopPropagation();if(streaming)return;chats=chats.filter(x=>x.id!==c.id);if(activeId===c.id){if(chats[0])activeId=chats[0].id;else addChat(false)}persist();render()};
+    l.appendChild(d);
+  });
+}
+function addChat(silent=true){const c={id:uid(),title:'Новый чат',messages:[],t:Date.now()};chats.unshift(c);activeId=c.id;persist();if(!silent||drawer.classList.contains('open'))render();else render()}
+$('#newChat').onclick=()=>{if(streaming)return toast('Дождись ответа или нажми ■');addChat(false);openDrawer(false)};
+
+/* ============ отправка ============ */
+const inp=$('#inp'),sendBtn=$('#sendBtn'),stopBtn=$('#stopBtn');
+function autosize(){inp.style.height='auto';inp.style.height=Math.min(inp.scrollHeight,132)+'px'}
+inp.addEventListener('input',()=>{autosize();sendBtn.classList.toggle('ready',inp.value.trim()||pending.length)});
+const fine=matchMedia('(pointer:fine)').matches;
+inp.addEventListener('keydown',e=>{if(fine&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+inp.addEventListener('paste',e=>{[...(e.clipboardData?.files||[])].forEach(f=>handleFile(f))});
+
+function renderAtt(){
+  const bar=$('#att');bar.hidden=!pending.length;bar.innerHTML='';
+  pending.forEach((p,i)=>{
+    const d=document.createElement('div');d.className='att';
+    d.innerHTML=p.img?`<img src="${p.img}"><button class="x">✕</button>`:`<span>📄</span><span class="nm">${esc(p.name)}</span><button class="x">✕</button>`;
+    d.querySelector('.x').onclick=()=>{pending.splice(i,1);renderAtt();sendBtn.classList.toggle('ready',inp.value.trim()||pending.length)};
+    bar.appendChild(d);
+  });
+}
+function endpoint(){
+  if(S.provider==='openrouter')return{url:'https://openrouter.ai/api/v1/chat/completions',key:S.apiKey,extra:{'X-Title':'AI Chat'}};
+  if(S.provider==='deepseek')return{url:'https://api.deepseek.com/chat/completions',key:S.apiKey};
+  let u=(S.baseUrl||'').trim().replace(/\/+$/,'');
+  if(/\/chat\/completions$/.test(u))u=u.slice(0,-'/chat/completions'.length);
+  if(/\/v\d+$/.test(u))u+='/chat/completions';else u+='/chat/completions';
+  return{url:u,key:S.apiKey};
+}
+function apiPayload(){
+  const c=cur();const arr=[{role:'system',content:S.system||''}];
+  c.messages.forEach(m=>{
+    if(m.role==='assistant'){if(!m.content&&!m.reasoning)return;arr.push({role:'assistant',content:m.content||''}) }
+    else{
+      if(m.images&&m.images.length){const p=[];if(m.content)p.push({type:'text',text:m.content});m.images.forEach(u=>p.push({type:'image_url',image_url:{url:u}}));arr.push({role:'user',content:p})}
+      else arr.push({role:'user',content:m.content||''});
+    }
+  });
+  return arr;
+}
+function send(){
+  if(streaming)return;
+  const c=cur();if(!c)return;
+  const text=inp.value.trim();
+  if(!text&&!pending.length)return;
+  let content=text;
+  pending.filter(p=>p.name).forEach(p=>{content+=(content?'\n\n':'')+`📎 Файл: ${p.name}\n\`\`\`\n${p.text}\n\`\`\``});
+  const imgs=pending.filter(p=>p.img).map(p=>p.img);
+  c.messages.push({role:'user',content,images:imgs.length?imgs:undefined});
+  if(c.title==='Новый чат')c.title=(text||'Фото').replace(/\s+/g,' ').slice(0,42);
+  inp.value='';autosize();sendBtn.classList.remove('ready');pending=[];renderAtt();persist();renderChats();
+  $('#chatTitle').textContent=c.title;
+  appendMsg(c.messages.length-1);
+  navigator.vibrate&&navigator.vibrate(12);
+  runGenerate();
+}
+sendBtn.onclick=send;
+function setBusy(v){
+  streaming=v;sendBtn.hidden=v;stopBtn.hidden=!v;
+  $('#newChat').disabled=v;
+}
+stopBtn.onclick=()=>{if(ctrl)ctrl.abort()};
+async function runGenerate(){
+  if(streaming)return;
+  const c=cur();if(!c)return;
+  if(!S.apiKey&&S.provider!=='openrouter'){openSheet(true);toast('🔑 Введи API-ключ в настройках');return}
+  const payload=apiPayload();
+  const draft={role:'assistant',content:'',reasoning:'',err:null};
+  c.messages.push(draft);
+  const node=appendMsg(c.messages.length-1);
+  setBusy(true);ctrl=new AbortController();
+  const cfg=endpoint();
+  let last=0;
+  try{
+    const res=await fetch(cfg.url,{method:'POST',signal:ctrl.signal,headers:Object.assign({'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},cfg.extra||{}),body:JSON.stringify({model:S.model,messages:payload,stream:true,temperature:+S.temperature})});
+    if(!res.ok){let d='';try{d=(await res.text()).slice(0,300)}catch(e){};throw new Error('HTTP '+res.status+(d?' — '+d:''))}
+    const ct=(res.headers.get('content-type')||'').toLowerCase();
+    if(res.body&&ct.includes('event-stream')){
+      const rd=res.body.getReader(),dec=new TextDecoder();let buf='';
+      for(;;){
+        const{done,value}=await rd.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});
+        let nl;
+        while((nl=buf.indexOf('\n'))>=0){
+          const line=buf.slice(0,nl).trim();buf=buf.slice(nl+1);
+          if(!line.startsWith('data:'))continue;
+          const dt=line.slice(5).trim();
+          if(dt==='[DONE]')continue;
+          try{
+            const j=JSON.parse(dt);const dl=j.choices?.[0]?.delta||{};
+            if(dl.reasoning_content)draft.reasoning+=dl.reasoning_content;
+            if(dl.reasoning&&!dl.content)draft.reasoning+=dl.reasoning;
+            if(dl.content)draft.content+=dl.content;
+            const now=Date.now();
+            if(now-last>90){last=now;paint(node,draft);if(atBottom())msgs.scrollTop=msgs.scrollHeight}
+          }catch(e){}
+        }
+      }
+    }else{
+      const j=await res.json();const m=j.choices?.[0]?.message||{};
+      draft.content=(m.content||'').trim();draft.reasoning=(m.reasoning_content||m.reasoning||'');
+    }
+  }catch(e){
+    if(e.name==='AbortError'){if(!draft.content&&!draft.reasoning)draft.err='⏹ Остановлено'}
+    else draft.err=(e&&e.message?e.message:String(e))
+  }
+  if(!draft.content&&!draft.reasoning&&!draft.err)draft.content='(пустой ответ от модели)';
+  setBusy(false);ctrl=null;persist();paint(node,draft);msgs.scrollTop=msgs.scrollHeight;
+  navigator.vibrate&&navigator.vibrate(20);
+}
+function atBottom(){return msgs.scrollHeight-msgs.scrollTop-msgs.clientHeight<90}
+msgs.addEventListener('scroll',()=>{});
+
+/* ============ файлы / камера ============ */
+function downscale(url,name,asPng){
+  const im=new Image();
+  im.onload=()=>{
+    const max=1600;let w=im.width,h=im.height;
+    if(w>max||h>max){const k=Math.min(max/w,max/h);w=Math.round(w*k);h=Math.round(h*k)}
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+    cv.getContext('2d').drawImage(im,0,0,w,h);
+    const out=cv.toDataURL(asPng?'image/png':'image/jpeg',0.78);
+    pending.push({img:out,name:name});renderAtt();sendBtn.classList.add('ready');
+    toast('📷 добавлено — жми ➤');
+  };
+  im.src=url;
+}
+function handleFile(f){
+  if(streaming)return toast('Дождись ответа');
+  if(f.type.startsWith('image/')){
+    const r=new FileReader();
+    r.onload=()=>downscale(r.result,f.name,f.type==='image/png');
+    r.readAsDataURL(f);
+    return;
+  }
+  if(f.size>65536)return toast('Файл больше 64 КБ — нельзя: '+f.name);
+  const r=new FileReader();
+  r.onload=()=>{pending.push({name:f.name,text:String(r.result).slice(0,14000)});renderAtt();sendBtn.classList.add('ready')};
+  r.readAsText(f);
+}
+const amenu=$('#attMenu');
+$('#attBtn').onclick=e=>{e.stopPropagation();amenu.hidden=!amenu.hidden};
+document.addEventListener('click',e=>{if(!amenu.hidden&&!e.target.closest('#attMenu,#attBtn'))amenu.hidden=true});
+$('#mGallery').onclick=()=>{amenu.hidden=true;$('#galleryInput').click()};
+$('#mPhoto').onclick=()=>{amenu.hidden=true;camOpen('environment').catch(()=>$('#photoInput').click())};
+$('#mFile').onclick=()=>{amenu.hidden=true;$('#fileInput').click()};
+$('#galleryInput').onchange=e=>{[...e.target.files].forEach(handleFile);e.target.value=''};
+$('#fileInput').onchange=e=>{[...e.target.files].forEach(handleFile);e.target.value=''};
+$('#photoInput').onchange=e=>{[...e.target.files].forEach(handleFile);e.target.value=''};
+
+let camStream=null;
+function camOpen(f){
+  $('#camFlip').dataset.f=f;
+  return navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:f,width:{ideal:1920},height:{ideal:1920}}}).then(st=>{
+    camStream=st;$('#camV').srcObject=st;$('#cam').hidden=false;
+  }).catch(e=>{
+    toast('Камера недоступна — открою системную');$('#photoInput').click();
+  });
+}
+function camClose(){camStream&&camStream.getTracks().forEach(t=>t.stop());camStream=null;$('#cam').hidden=true}
+$('#camClose').onclick=camClose;
+$('#camFlip').onclick=()=>{camClose();camOpen($('#camFlip').dataset.f==='user'?'environment':'user')};
+$('#camShot').onclick=()=>{
+  const v=$('#camV');if(!v.videoWidth)return;
+  const cv=document.createElement('canvas');cv.width=v.videoWidth;cv.height=v.videoHeight;
+  cv.getContext('2d').drawImage(v,0,0);
+  const url=cv.toDataURL('image/jpeg',0.85);
+  camClose();downscale(url,'photo.jpg',false);
+};
+
+/* ============ настройки ============ */
+const sheet=$('#sheet'),setScrim=$('#setScrim');
+function openSheet(v){sheet.classList.toggle('open',v);setScrim.classList.toggle('show',v)}
+$('#setBtn').onclick=()=>openSheet(true);
+$('#openSettings').onclick=()=>{openDrawer(false);openSheet(true)};
+$('#setClose').onclick=()=>openSheet(false);
+function saveS(){save('settings',S)}
+const HINTS={
+  openrouter:'⚡ Бесплатно: ключ с openrouter.ai → Keys. Бесплатные модели помечены «:free» (DeepSeek и др.).',
+  deepseek:'🇨🇳 Официальный API: платный, но очень дешёвый. Ключ с platform.deepseek.com.',
+  custom:'Любой OpenAI-совместимый сервер: LM Studio, Ollama, llama.cpp, vLLM и т.п.'
+};
+function syncSettings(){
+  $('#sProv').value=S.provider;$('#provHint').textContent=HINTS[S.provider];
+  $('#sKey').value=S.apiKey;$('#sBase').value=S.baseUrl;$('#baseRow').hidden=S.provider!=='custom';
+  $('#sModel').value=S.model;$('#sModel').placeholder={openrouter:'deepseek/deepseek-chat-v3-0324:free',deepseek:'deepseek-chat',custom:'любая модель сервера'}[S.provider];
+  $('#sSys').value=S.system;$('#sTemp').value=S.temperature;$('#tempVal').textContent=S.temperature;
+  const ml=$('#modelList');ml.innerHTML=(S.models||[]).map(m=>`<option value="${esc(m)}">`).join('');
+}
+$('#sProv').onchange=()=>{S.provider=$('#sProv').value;if(!S.model.trim())S.model={openrouter:'deepseek/deepseek-chat-v3-0324:free',deepseek:'deepseek-chat',custom:''}[S.provider]||'';saveS();syncSettings()};
+$('#sKey').oninput=()=>{S.apiKey=$('#sKey').value.trim();saveS()};
+$('#keyEye').onclick=()=>{$('#sKey').type=$('#sKey').type==='password'?'text':'password'};
+$('#sBase').oninput=()=>{S.baseUrl=$('#sBase').value.trim();saveS()};
+$('#sModel').oninput=()=>{S.model=$('#sModel').value.trim();saveS()};
+$('#sSys').oninput=()=>{S.system=$('#sSys').value;saveS()};
+$('#sTemp').oninput=()=>{S.temperature=$('#sTemp').value;$('#tempVal').textContent=S.temperature;saveS()};
+$('#loadModels').onclick=async()=>{
+  const b=$('#loadModels');const old=b.textContent;b.textContent='⏳ Загрузка…';b.disabled=true;
+  try{
+    let url,opts={};
+    if(S.provider==='openrouter')url='https://openrouter.ai/api/v1/models';
+    else if(S.provider==='deepseek')url='https://api.deepseek.com/models',opts.headers={Authorization:'Bearer '+S.apiKey};
+    else url=endpoint().url.replace('/chat/completions','')+'/models',opts.headers={Authorization:'Bearer '+S.apiKey};
+    const r=await fetch(url,opts);
+    if(!r.ok)throw new Error('HTTP '+r.status+(r.status===401?' — ключ неверный':r.status===403?' — доступ закрыт':''));
+    const j=await r.json();let ids=(j.data||j||[]).map(m=>m.id||m);
+    if(S.provider==='openrouter'){const free=ids.filter(i=>/:free$/.test(i));if(free.length){ids=free;toast('✓ Ключ ок. Бесплатных моделей: '+ids.length)}else toast('✓ Ключ ок. Моделей: '+ids.length+' (бесплатных нет)')}
+    else toast('✓ Моделей загружено: '+ids.length);
+    ids.sort();S.models=ids;saveS();syncSettings();
+  }catch(e){toast('✗ '+e.message)}
+  b.textContent=old;b.disabled=false;
+};
+$('#themeSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.theme=b.dataset.t;saveS();applyTheme()});
+
+const accRow=$('#accents');
+ACCENTS.forEach(([nm,h])=>{
+  const b=document.createElement('button');b.className='sw';b.title=nm;b.dataset.hue=h;
+  b.style.background=h<0?'hsl(262 65% 55%)':`hsl(${h} 65% 55%)`;
+  b.onclick=()=>{S.accent=h;saveS();applyTheme()};accRow.appendChild(b);
+});
+$('#themeSeg').addEventListener('touchstart',()=>{},{passive:true});
+$('#themeBtn').onclick=()=>{S.theme=S.theme==='auto'?'light':S.theme==='light'?'dark':'auto';saveS();applyTheme();toast('Тема: '+{auto:'авто',light:'светлая',dark:'тёмная'}[S.theme])};
+$('#btnExport').onclick=()=>{
+  const blob=new Blob([JSON.stringify({chats,settings:Object.assign({},S,{apiKey:''})},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ai-chat-backup.json';a.click();toast('⬆️ Скачано');
+};
+$('#btnImport').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;e.target.value='';
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const j=JSON.parse(r.result);
+    if(j.chats&&j.chats.length){chats=j.chats;activeId=chats[0].id;persist();render();toast('✓ Импортировано чатов: '+chats.length)}
+    else toast('✗ Файл не похож на бэкап');
+  }catch(err){toast('✗ Битый JSON')}};
+  r.readAsText(f);
+};
+$('#btnWipe').onclick=()=>{if(confirm('Точно удалить ВСЕ чаты и настройки?')){localStorage.clear();location.reload()}};
+
+/* ============ общая загрузка ============ */
+function render(){renderChats();const c=cur();$('#chatTitle').textContent=c?c.title:'AI Чат';renderMsgs()}
+if(!chats.length||!cur()){const c={id:uid(),title:'Новый чат',messages:[],t:Date.now()};chats.push(c);activeId=c.id;persist()}
+syncSettings();applyTheme();render();
+window.__applyTheme=applyTheme;
+setInterval(()=>{if(streaming&&atBottom())msgs.scrollTop=msgs.scrollHeight},400);
+window.addEventListener('beforeunload',()=>{ctrl&&ctrl.abort()});
+</script>
+</body>
+</html>
