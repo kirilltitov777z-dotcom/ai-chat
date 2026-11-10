@@ -212,7 +212,6 @@ private fun TabModel(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             listOf(
-                PROVIDER_OPENROUTER to "OpenRouter",
                 PROVIDER_GROQ to "Groq",
                 PROVIDER_CUSTOM to "Свой сервер"
             ).forEach { (value, label) ->
@@ -235,7 +234,7 @@ private fun TabModel(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("API-ключ") },
             singleLine = true,
-            visualTransformation = if (keyVisibleLocal) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+            visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
                 IconButton(onClick = { keyVisibleLocal = !keyVisibleLocal }) {
                     Icon(
@@ -268,7 +267,7 @@ private fun TabModel(
         val presets = when (s.provider) {
             PROVIDER_GROQ -> GROQ_PRESETS
             PROVIDER_CUSTOM -> emptyList()
-            else -> MODEL_PRESETS
+            else -> emptyList()
         }
         if (presets.isNotEmpty()) {
             Text("Готовые модели", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)

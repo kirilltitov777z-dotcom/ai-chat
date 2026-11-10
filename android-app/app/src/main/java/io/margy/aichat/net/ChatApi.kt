@@ -3,8 +3,8 @@ package io.margy.aichat.net
 import io.margy.aichat.data.AppSettings
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.PROVIDER_CUSTOM
-import io.margy.aichat.data.PROVIDER_DEEPSEEK
 import io.margy.aichat.data.PROVIDER_GROQ
+import io.margy.aichat.data.PROVIDER_OPENROUTER
 import io.margy.aichat.data.Role
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,8 +36,14 @@ object ChatApi {
     data class Endpoint(val url: String, val key: String, val headers: Map<String, String>)
 
     fun endpoint(s: AppSettings): Endpoint = when (s.provider) {
-        PROVIDER_DEEPSEEK -> Endpoint("https://api.deepseek.com/chat/completions", s.apiKey, emptyMap())
         PROVIDER_GROQ -> Endpoint("https://api.groq.com/openai/v1/chat/completions", s.apiKey, emptyMap())
+        PROVIDER_OPENROUTER -> Endpoint(
+            "https://openrouter.ai/api/v1/chat/completions",
+            s.apiKey,
+            mapOf(
+                "X-Title" to "LotiChat"
+            )
+        )
         PROVIDER_CUSTOM -> {
             val base = s.baseUrl.trim().trimEnd('/')
             val url = when {
@@ -255,7 +261,6 @@ object ChatApi {
                     val base = s.baseUrl.trim().trimEnd('/')
                     if (base.isBlank()) "" else "$base/models"
                 }
-                s.provider == PROVIDER_DEEPSEEK -> "https://api.deepseek.com/models"
                 s.provider == PROVIDER_GROQ -> "https://api.groq.com/openai/v1/models"
                 else -> "https://openrouter.ai/api/v1/models"
             }

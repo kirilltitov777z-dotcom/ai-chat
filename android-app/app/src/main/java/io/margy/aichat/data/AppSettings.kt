@@ -4,9 +4,7 @@ import android.content.Context
 
 const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
-const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_GROQ = "groq"
-const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_CUSTOM = "custom"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки
@@ -14,20 +12,6 @@ const val DEFAULT_API_KEY = "sk-24bb60f46a5c4a108fcfad60aacd4270"
 
 // Модель по умолчанию называется Loki
 const val DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
-
-// Все бесплатные модели OpenRouter (:free)
-val MODEL_PRESETS = listOf(
-    "deepseek/deepseek-chat-v3-0324:free",
-    "deepseek/deepseek-r1:free",
-    "google/gemini-2.0-flash-exp:free",
-    "google/gemini-2.5-flash-preview:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "qwen/qwen-2.5-vl-72b-instruct:free",
-    "nvidia/nemotron-70b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "meta-llama/llama-3.1-8b-instruct:free"
-)
 
 // Бесплатные модели Groq
 val GROQ_PRESETS = listOf(
@@ -48,7 +32,7 @@ val BUILTIN_FREE_MODELS = listOf(
 const val DEV_MODE_PASSWORD = "Loti_Dev_2026!@#"
 
 data class AppSettings(
-    val provider: String = PROVIDER_OPENROUTER,
+    val provider: String = PROVIDER_GROQ,
     val apiKey: String = DEFAULT_API_KEY,
     val model: String = DEFAULT_MODEL,
     val baseUrl: String = "",
