@@ -32,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -213,6 +212,7 @@ private fun TabModel(
         ) {
             listOf(
                 PROVIDER_OPENROUTER to "OpenRouter",
+                PROVIDER_GROQ to "Groq",
                 PROVIDER_CUSTOM to "Свой сервер"
             ).forEach { (value, label) ->
                 FilterChip(
@@ -236,10 +236,10 @@ private fun TabModel(
             singleLine = true,
             visualTransformation = if (keyVisibleLocal) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                IconButton(onClick = { keyVisible = !keyVisible }) {
+                IconButton(onClick = { keyVisibleLocal = !keyVisibleLocal }) {
                     Icon(
-                        if (keyVisible) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                        if (keyVisible) "Скрыть" else "Показать"
+                        if (keyVisibleLocal) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                        if (keyVisibleLocal) "Скрыть" else "Показать"
                     )
                 }
             }
@@ -265,6 +265,7 @@ private fun TabModel(
         )
 
         val presets = when (s.provider) {
+            PROVIDER_GROQ -> GROQ_PRESETS
             PROVIDER_CUSTOM -> emptyList()
             else -> MODEL_PRESETS
         }
@@ -301,6 +302,7 @@ private fun TabModel(
             TextButton(
                 onClick = {
                     val url = when (s.provider) {
+                        PROVIDER_GROQ -> "https://console.groq.com/keys"
                         PROVIDER_CUSTOM -> "https://lmstudio.ai"
                         else -> "https://openrouter.ai/keys"
                     }
@@ -396,7 +398,8 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
         )
         Text(
             "Нативное приложение на Kotlin. " +
-                "Ваша переписка сохраняется на телефоне в аккаунте.",
+                "Ваша переписка сохраняется на телефоне в аккаунте. " +
+                "Поддерживает OpenRouter и Groq.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -407,7 +410,6 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
                     .setType("text/plain")
                     .putExtra(Intent.EXTRA_TEXT, vm.exportJson())
                 runCatching {
-                    context = LocalContext.current
                     context.startActivity(Intent.createChooser(intent, "Экспорт чатов"))
                 }
             },

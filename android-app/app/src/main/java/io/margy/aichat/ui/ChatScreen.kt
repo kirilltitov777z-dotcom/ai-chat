@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
+import io.margy.aichat.data.GROQ_PRESETS
 import io.margy.aichat.data.MODEL_PRESETS
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
@@ -216,11 +217,17 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 
 private fun modelLabel(vm: ChatViewModel): String {
     val model = vm.settings.model.ifBlank { "Loki" }
+    val provider = when (vm.settings.provider) {
+        "groq" -> "Groq"
+        "openrouter" -> "OpenRouter"
+        "custom" -> "Свой сервер"
+        else -> "Loki"
+    }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
     if (vm.searchEnabled) extras.add("поиск")
     return buildString {
-        append("Loki · ").append(model)
+        append(provider).append(" · ").append(model)
         if (extras.isNotEmpty()) append(" · ").append(extras.joinToString(", "))
     }
 }
@@ -870,7 +877,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.6 · Loki")
+                    vm.showToast("LotiChat 2.7 · Loki + Groq")
                 },
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
             )
@@ -905,7 +912,11 @@ private fun ImagePreviewDialog(path: String, onClose: () -> Unit) {
 
 @Composable
 private fun ModelPickerDialog(vm: ChatViewModel) {
-    val all = vm.models.ifEmpty { MODEL_PRESETS }
+    val presets = when (vm.settings.provider) {
+        "groq" -> GROQ_PRESETS
+        else -> MODEL_PRESETS
+    }
+    val all = vm.models.ifEmpty { presets }
     var query by remember { mutableStateOf("") }
     val filtered = remember(all, query) {
         if (query.isBlank()) all else all.filter { it.contains(query.trim(), ignoreCase = true) }
@@ -942,9 +953,15 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(id, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                if (id == "loki") {
+                                if (id == "demo:claude" || id == "demo:gpt" || id == "demo:deepseek") {
                                     Text(
-                                        "ваша модель · бесплатно",
+                                        "бесплатно, без ключа",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                } else if (id.endsWith(":free")) {
+                                    Text(
+                                        "бесплатно (:free)",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )

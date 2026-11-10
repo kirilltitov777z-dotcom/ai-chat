@@ -5,26 +5,45 @@ import android.content.Context
 const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
 const val PROVIDER_OPENROUTER = "openrouter"
-const val PROVIDER_DEEPSEEK = "deepseek"
+const val PROVIDER_GROQ = "groq"
 const val PROVIDER_CUSTOM = "custom"
-const val PROVIDER_DEMO = "demo"
 
-// Твой ключ OpenRouter — по умолчанию уже встроен, чтобы работало сразу
+// Встроенный бесплатный ключ OpenRouter — работает сразу после установки
 const val DEFAULT_API_KEY = "sk-24bb60f46a5c4a108fcfad60aacd4270"
 
-// Модель называется Loki — это твоя разработка
-const val DEFAULT_MODEL = "loki"
+// Модель по умолчанию называется Loki
+const val DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
 
+// Все бесплатные модели OpenRouter (:free)
 val MODEL_PRESETS = listOf(
-    "loki",
     "deepseek/deepseek-chat-v3-0324:free",
     "deepseek/deepseek-r1:free",
     "google/gemini-2.0-flash-exp:free",
+    "google/gemini-2.5-flash-preview:free",
     "meta-llama/llama-3.3-70b-instruct:free",
-    "qwen/qwen-2.5-72b-instruct:free"
+    "qwen/qwen-2.5-72b-instruct:free",
+    "qwen/qwen-2.5-vl-72b-instruct:free",
+    "nvidia/nemotron-70b-instruct:free",
+    "mistralai/mistral-7b-instruct:free",
+    "meta-llama/llama-3.1-8b-instruct:free"
 )
 
-/// Секретный пароль для режима разработчика
+// Бесплатные модели Groq
+val GROQ_PRESETS = listOf(
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
+    "llama-3.2-3b-preview",
+    "llama-3.2-1b-preview",
+    "mixtral-8x7b-32768"
+)
+
+// Демо-модели, которые работают вообще без ключа (встроенный ответчик)
+val BUILTIN_FREE_MODELS = listOf(
+    "demo:claude",
+    "demo:gpt",
+    "demo:deepseek"
+)
+
 const val DEV_MODE_PASSWORD = "Loti_Dev_2026!@#"
 
 data class AppSettings(
@@ -39,14 +58,16 @@ data class AppSettings(
     val accent: Int = 0,
     val firstRun: Boolean = true,
     val devMode: Boolean = false,
-    // Аккаунт
     val accountUser: String = "",
     val accountPass: String = "",
     val accountLoggedIn: Boolean = false
 ) {
-    fun defaultModel(): String = DEFAULT_MODEL
+    fun defaultModel(): String = when (provider) {
+        PROVIDER_GROQ -> GROQ_PRESETS.first()
+        else -> DEFAULT_MODEL
+    }
 
-    fun isDemo(): Boolean = provider == PROVIDER_DEMO
+    fun isDemo(): Boolean = provider == "demo"
 }
 
 class SettingsStore(context: Context) {
