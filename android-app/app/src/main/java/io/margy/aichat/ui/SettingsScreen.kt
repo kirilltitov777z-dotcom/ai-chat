@@ -321,17 +321,10 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 Text("LotiChat 2.0", style = MaterialTheme.typography.titleMedium)
                 Text(
                     "Нативное приложение: Kotlin + Jetpack Compose, Material 3 (Material You). " +
-                        "Без WebView и без внешних CDN — интерфейс не может «не загрузиться».",
+                        "Без WebView и без внешних CDN.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(onClick = {
-                    openUrl(context, "https://github.com/kirilltitov777z-dotcom/ai-chat")
-                }) {
-                    Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("GitHub репозиторий")
-                }
             }
 
             Spacer(Modifier.height(24.dp))

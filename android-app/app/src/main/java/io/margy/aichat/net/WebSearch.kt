@@ -37,7 +37,7 @@ object WebSearch {
     private fun get(url: String): String {
         val req = Request.Builder()
             .url(url)
-            .header("User-Agent", "LotiChat/2.0 (Android; github.com/kirilltitov777z-dotcom/ai-chat)")
+            .header("User-Agent", "LotiChat/2.0 (Android)")
             .get()
             .build()
         client.newCall(req).execute().use { resp ->

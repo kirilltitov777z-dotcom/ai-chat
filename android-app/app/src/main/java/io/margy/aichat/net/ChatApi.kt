@@ -49,7 +49,6 @@ object ChatApi {
             "https://openrouter.ai/api/v1/chat/completions",
             s.apiKey,
             mapOf(
-                "HTTP-Referer" to "https://github.com/kirilltitov777z-dotcom/ai-chat",
                 "X-Title" to "LotiChat"
             )
         )
