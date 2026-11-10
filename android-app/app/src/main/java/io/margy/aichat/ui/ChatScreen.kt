@@ -109,11 +109,9 @@ fun LotiChatRoot(vm: ChatViewModel) {
         if (shouldShowKeyDialog) {
             ApiKeySetupDialog(
                 onKeyEntered = { key ->
-                    showKeyDialog = false
                     vm.updateSettings(s.copy(apiKey = key.trim(), firstRun = false))
                 },
                 onSkip = {
-                    showKeyDialog = false
                     vm.updateSettings(s.copy(firstRun = false))
                 },
                 onOpenWebsite = {
@@ -219,7 +217,7 @@ private fun ModelChipsRow(vm: ChatViewModel) {
             val label = id.substringAfterLast('/')
             val isActive = current == id
             val isFree = id.endsWith(":free")
-            ChoiceChip(
+            AssistChip(
                 selected = isActive,
                 onClick = {
                     vm.settings.let { s ->
@@ -237,7 +235,7 @@ private fun ModelChipsRow(vm: ChatViewModel) {
                         maxLines = 1
                     )
                 },
-                colors = ChoiceChipDefaults.colors(
+                colors = AssistChipDefaults.colors(
                     containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceContainerLow
                 )
