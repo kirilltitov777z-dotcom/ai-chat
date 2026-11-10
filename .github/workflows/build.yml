@@ -34,27 +34,27 @@ jobs:
       - name: Prepare APK
         run: |
           mkdir -p dist
-          cp android-app/app/build/outputs/apk/release/app-release.apk AI-Chat.apk
-          ls -lh AI-Chat.apk
+          cp android-app/app/build/outputs/apk/release/app-release.apk LokiChat.apk
+          ls -lh LokiChat.apk
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LotiChat-apk
-          path: AI-Chat.apk
+          name: LokiChat-apk
+          path: LokiChat.apk
 
       - name: Publish to Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view apk >/dev/null 2>&1; then
-            gh release upload apk AI-Chat.apk --clobber
+            gh release upload apk LokiChat.apk --clobber
             gh release edit apk --latest \
-              --title "LotiChat — APK" \
-              --notes "v2.0 — полностью нативная версия на Kotlin + Jetpack Compose (Material You 3). Скачивай без логина и устанавливай."
+              --title "LokiChat 1.0 — APK" \
+              --notes "LokiChat 1.0 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), свой DNS-резолвер, адаптивная иконка, Material You 3."
           else
-            gh release create apk AI-Chat.apk \
-              --title "LotiChat — APK" \
-              --notes "v2.0 — полностью нативная версия на Kotlin + Jetpack Compose (Material You 3). Скачивай без логина и устанавливай." \
+            gh release create apk LokiChat.apk \
+              --title "LokiChat 1.0 — APK" \
+              --notes "LokiChat 1.0 — бесплатный ИИ-чат. Работает сразу без ключа (Pollinations), свой DNS-резолвер, адаптивная иконка, Material You 3." \
               --latest
           fi
