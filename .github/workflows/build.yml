@@ -1,6 +1,12 @@
 name: build-apk
 
-on: [workflow_dispatch]
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 jobs:
   apk:
@@ -22,14 +28,20 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build APK
-        run: gradle -p android-app assembleDebug --no-daemon --stacktrace
+      - name: Build APK (release, signed)
+        run: gradle -p android-app assembleRelease --no-daemon --stacktrace
 
       - name: Prepare APK
         run: |
           mkdir -p dist
-          cp android-app/app/build/outputs/apk/debug/app-debug.apk AI-Chat.apk
+          cp android-app/app/build/outputs/apk/release/app-release.apk AI-Chat.apk
           ls -lh AI-Chat.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LotiChat-apk
+          path: AI-Chat.apk
 
       - name: Publish to Release
         env:
@@ -37,10 +49,12 @@ jobs:
         run: |
           if gh release view apk >/dev/null 2>&1; then
             gh release upload apk AI-Chat.apk --clobber
-            gh release edit apk --latest
+            gh release edit apk --latest \
+              --title "LotiChat — APK" \
+              --notes "v2.0 — полностью нативная версия на Kotlin + Jetpack Compose (Material You 3). Скачивай без логина и устанавливай."
           else
             gh release create apk AI-Chat.apk \
               --title "LotiChat — APK" \
-              --notes "Свежая сборка приложения. Скачивай без логина, устанавливай как обычное приложение." \
+              --notes "v2.0 — полностью нативная версия на Kotlin + Jetpack Compose (Material You 3). Скачивай без логина и устанавливай." \
               --latest
           fi
