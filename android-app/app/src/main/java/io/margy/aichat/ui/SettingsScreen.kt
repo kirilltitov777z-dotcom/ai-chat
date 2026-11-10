@@ -7,12 +7,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -46,7 +48,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun onUpdate(new: AppSettings) {
+    fun saveSettings(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
@@ -72,26 +74,40 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Вкладки
-            Tabs(
-                selectedTabIndex = selectedTab,
-                onTabSelected = { selectedTab = it },
-                modifier = Modifier.fillMaxWidth()
+            // Вкладки как чипсы
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = index == selectedTab,
-                        onClick = { selectedTab = index },
-                        text = { Text(title) }
-                    )
+                    val isSelected = selectedTab == index
+                    Box(
+                        Modifier
+                            .background(
+                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                else Color.Transparent,
+                                RoundedCornerShape(20.dp)
+                            )
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .clickable { selectedTab = index }
+                    ) {
+                        Text(
+                            title,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        )
+                    }
                 }
             }
             Spacer(Modifier.height(12.dp))
 
             when (selectedTab) {
-                0 -> TabMain(s, set, keyVisible, context, vm)
-                1 -> TabModel(s, set, keyVisible, context, vm)
-                2 -> TabAccount(vm, set)
+                0 -> TabMain(s, ::saveSettings, keyVisible, context, vm)
+                1 -> TabModel(s, ::saveSettings, keyVisible, context, vm)
+                2 -> TabAccount(vm, ::saveSettings)
                 3 -> TabAbout(vm)
             }
 
@@ -319,7 +335,7 @@ private fun TabAccount(vm: ChatViewModel, onUpdate: (AppSettings) -> Unit) {
             Spacer(Modifier.height(12.dp))
             var user by remember { mutableStateOf("") }
             var pass by remember { mutableStateOf("") }
-            var mode by remember { mutableStateOf(false) } // false = login, true = register
+            var mode by remember { mutableStateOf(false) }
 
             OutlinedTextField(
                 value = user,
@@ -348,7 +364,7 @@ private fun TabAccount(vm: ChatViewModel, onUpdate: (AppSettings) -> Unit) {
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = IconButtonDefaults.filledIconButtonColors(
+                colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
@@ -373,7 +389,7 @@ private fun TabAbout(vm: ChatViewModel) {
     ) {
         Text("LotiChat", style = MaterialTheme.typography.titleLarge)
         Text(
-            "Версия 2.6",
+            "Версия 2.7",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
