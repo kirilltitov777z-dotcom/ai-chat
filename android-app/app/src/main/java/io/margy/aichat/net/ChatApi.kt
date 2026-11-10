@@ -19,6 +19,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
 class ApiException(val code: Int, override val message: String) : Exception(message)
@@ -29,7 +30,6 @@ object ChatApi {
 
     val http: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
-        // Ноль = без тайм-аута вообще. Долгие размышления не обрываются.
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .writeTimeout(0, TimeUnit.MILLISECONDS)
         .callTimeout(0, TimeUnit.MILLISECONDS)
@@ -40,19 +40,23 @@ object ChatApi {
     data class Endpoint(val url: String, val key: String, val headers: Map<String, String>)
 
     fun endpoint(s: AppSettings): Endpoint = when (s.provider) {
-        // Pollinations — бесплатно, без ключа
         PROVIDER_POLLINATIONS -> Endpoint(
             "https://text.pollinations.ai/openai/chat/completions",
             "",
             emptyMap()
         )
-        PROVIDER_GROQ -> Endpoint("https://api.groq.com/openai/v1/chat/completions", s.apiKey, emptyMap())
+        PROVIDER_GROQ -> Endpoint(
+            "https://api.groq.com/openai/v1/chat/completions",
+            s.apiKey,
+            emptyMap()
+        )
         PROVIDER_OPENROUTER -> Endpoint(
             "https://openrouter.ai/api/v1/chat/completions",
             s.apiKey,
-            mapOf(
-                "X-Title" to "LokiChat"
-            )
+            mapOf("X-Title" to "LotiChat")
+        )
+        PROVIDER_LOCAL -> Endpoint(
+            "local://local", "", emptyMap()
         )
         PROVIDER_CUSTOM -> {
             val base = s.baseUrl.trim().trimEnd('/')
@@ -66,15 +70,13 @@ object ChatApi {
         else -> Endpoint(
             "https://openrouter.ai/api/v1/chat/completions",
             s.apiKey,
-            mapOf(
-                "X-Title" to "LokiChat"
-            )
+            mapOf("X-Title" to "LotiChat")
         )
     }
 
     fun effectiveModel(s: AppSettings, thinking: Boolean): String {
         val current = s.model.ifBlank { s.defaultModel() }
-        if (s.provider == PROVIDER_LOCAL || s.provider == PROVIDER_POLLINATIONS) return current
+        if (s.provider == "demo" || s.provider == "local") return current
         if (!thinking) return current
         return when (s.provider) {
             PROVIDER_DEEPSEEK -> "deepseek-reasoner"
@@ -82,7 +84,7 @@ object ChatApi {
             PROVIDER_CUSTOM -> current
             else -> current
         }.let { model ->
-            if (s.provider != PROVIDER_OPENROUTER) return@let model
+            if (s.provider != "openrouter") return@let model
             if (Regex("r1|reasoner|thinking|qwq|o1|o3", RegexOption.IGNORE_CASE).containsMatchIn(model)) model
             else "deepseek/deepseek-r1:free"
         }
@@ -158,7 +160,7 @@ object ChatApi {
         put("messages", messagesJson(history, systemPrompt(s, searchContext), withImages))
         put("stream", true)
         put("temperature", s.temperature.toDouble())
-        if (thinking && s.provider == PROVIDER_OPENROUTER) {
+        if (thinking && s.provider == "openrouter") {
             put("reasoning", JSONObject().put("enabled", true))
         }
     }
@@ -252,7 +254,6 @@ object ChatApi {
     }
 
     private fun parseError(raw: String, code: Int): String {
-        // Ошибка лимита Pollinations: подсказываем сколько ждать
         if (raw.contains("FREE_LIMIT", true)) {
             val wait = Regex("Retry after (\\d+)s").find(raw)?.groupValues?.get(1)?.toIntOrNull()
             return if (wait != null) {
@@ -286,6 +287,7 @@ object ChatApi {
                     val base = s.baseUrl.trim().trimEnd('/')
                     if (base.isBlank()) "" else "$base/models"
                 }
+                s.provider == PROVIDER_DEEPSEEK -> "https://api.deepseek.com/models"
                 s.provider == PROVIDER_GROQ -> "https://api.groq.com/openai/v1/models"
                 else -> "https://openrouter.ai/api/v1/models"
             }
@@ -308,12 +310,5 @@ object ChatApi {
                 ids
             }
         }
-    }
-
-    /** Локальный ответчик без интернета — для слабых устройств */
-    suspend fun localReply(settings: AppSettings, history: List<Message>): String {
-        val lastUser = history.lastOrNull { it.role == Role.USER }
-        val q = lastUser?.text ?: ""
-        return io.margy.aichat.ui.ChatViewModel.localDemo(q)
     }
 }

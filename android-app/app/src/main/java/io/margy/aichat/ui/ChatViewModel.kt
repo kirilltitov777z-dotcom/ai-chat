@@ -13,22 +13,18 @@ import io.margy.aichat.data.Chat
 import io.margy.aichat.data.ChatJson
 import io.margy.aichat.data.ChatStore
 import io.margy.aichat.data.Message
-import io.margy.aichat.data.PROVIDER_LOCAL
-import io.margy.aichat.data.PROVIDER_POLLINATIONS
 import io.margy.aichat.data.Role
 import io.margy.aichat.data.SettingsStore
+import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.net.ApiException
 import io.margy.aichat.net.ChatApi
 import io.margy.aichat.net.WebSearch
 import io.margy.aichat.util.Media
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -69,9 +65,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         set
 
+    /// Лог для режима разработчика — все сообщения, даже если не в сети
     var devLogs by mutableStateOf<List<String>>(emptyList())
         private set
 
+    /// Экран входа/регистрации
     var showLogin by mutableStateOf(false)
         private set
 
@@ -94,13 +92,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         get() = settings.devMode
 
     val apiReady: Boolean
-        get() = settings.apiKey.isNotBlank() || settings.provider == PROVIDER_POLLINATIONS || settings.provider == PROVIDER_LOCAL
+        get() = settings.provider == "pollinations" || settings.apiKey.isNotBlank()
 
     val isLoggedIn: Boolean
         get() = settings.accountLoggedIn && settings.accountUser.isNotBlank()
-
-    val appVersion: String
-        get() = "1.0"
 
     fun openSettings() {
         screen = "settings"
@@ -268,6 +263,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /// Проверка реальной связи с сервером (DNS + ответ модели)
     fun checkConnection() {
         if (checkingKey) return
         viewModelScope.launch {
@@ -288,7 +284,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         .url(ep.url)
                         .header("Content-Type", "application/json")
                         .apply { if (ep.key.isNotBlank()) header("Authorization", "Bearer ${ep.key}") }
-                        .post(body.toString().toRequestBody("application/json".toMediaType()))
+                        .post(body.toString().toRequestBody(
+                            okhttp3.MediaType.Companion.toMediaType("application/json")
+                        ))
                         .build()
                     val resp = ChatApi.http.newCall(req).execute()
                     resp.use {
@@ -320,7 +318,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             checkingKey = false
             res.onSuccess { list ->
                 models = list
-                if (list.isEmpty()) toastMessage = "Сервер не вернул модели"
+                if (list.isEmpty()) toastMessage = "Сервер не вернул моделей"
                 else showModelPicker = true
             }.onFailure {
                 toastMessage = it.message ?: "Не удалось получить список моделей"
@@ -353,9 +351,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         updateSettings(settings.copy(devMode = false))
     }
 
+    // ---------- Аккаунт ----------
+
     fun registerAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
-            toastMessage = "Введите логин и пароль"
+            toastMessage = "Введи логин и пароль"
             return false
         }
         updateSettings(settings.copy(
@@ -374,7 +374,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     fun loginAccount(user: String, pass: String): Boolean {
         if (user.isBlank() || pass.isBlank()) {
-            toastMessage = "Введите логин и пароль"
+            toastMessage = "Введи логин и пароль"
             return false
         }
         if (user == settings.accountUser && pass == settings.accountPass) {
@@ -386,7 +386,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             toastMessage = "Добро пожаловать, $user"
             return true
         } else if (settings.accountUser.isNotBlank() && user != settings.accountUser) {
-            toastMessage = "Аккаунт не найден. Зарегистрируйтесь."
+            toastMessage = "Аккаунт не найден. Зарегистрируйся."
             return false
         } else {
             toastMessage = "Неверный пароль"
@@ -403,9 +403,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun addDevLog(text: String) {
+        if (!settings.devMode) return
         val entry = "[${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}] $text"
         devLogs = devLogs + entry
     }
+
+    // ----------------------------------------------------------------
 
     private fun ensureChat(): String {
         val id = currentId
@@ -459,22 +462,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 val chatNow = chats.firstOrNull { it.id == chatId } ?: return@launch
                 val history = chatNow.messages.filter { it.id != aiId && !it.error }
 
-                val model = settings.model
-
-                if (settings.provider == PROVIDER_LOCAL) {
-                    var delta = StringBuilder()
-                    val response = localDemo(chatNow.messages.filter { it.role == Role.USER }.lastOrNull()?.text ?: "")
-                    for (ch in response) {
-                        delta.append(ch)
-                        patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
-                        withContext(Dispatchers.Main) {
-                            kotlinx.coroutines.delay(30)
-                        }
-                    }
-                    addDevLog("ЛОКАЛЬНАЯ МОДЕЛЬ: $response")
-                    patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
+                // Локальная модель — без инета, без ключа
+                if (settings.provider == "local") {
+                    runLocalReply(chatId, aiId, history.lastOrNull { it.role == Role.USER }?.text ?: "")
                     return@launch
                 }
+
+                val model = ChatApi.effectiveModel(settings, thinking)
+                var withImages = true
 
                 var searchContext = ""
                 if (searchEnabled) {
@@ -524,19 +519,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 try {
                     attempt(true)
                 } catch (e: ApiException) {
-                    val errText = e.message?.take(300) ?: "Ошибка сети"
-                    addDevLog("API error: $errText")
-                    patchMessage(chatId, aiId) {
-                        it.copy(
-                            text = "",
-                            streaming = false,
-                            status = null,
-                            error = true,
-                            reasoning = ""
-                        )
-                    }
-                    patchMessage(chatId, aiId) { m ->
-                        m.copy(text = "⚠️ $errText")
+                    val looksLikeImageProblem = e.code in 400..499 ||
+                        e.message.contains("image", true) ||
+                        e.message.contains("vision", true)
+                    if (withImages && looksLikeImageProblem) {
+                        withImages = false
+                        setStatus(chatId, aiId, "Модель без зрения — отправляю без картинок…")
+                        attempt(false)
+                    } else {
+                        throw e
                     }
                 }
 
@@ -562,50 +553,88 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun localDemo(text: String): String {
-        val t = text.trim().lowercase()
-        return when {
-            t.contains("привет") || t.contains("здравств") || t.contains("хай") || t.contains("добрый") -> {
-                val greetings = listOf(
-                    "Привет! Я Loki, ваш личный ассистент. Чем могу помочь?",
-                    "Здравствуйте! Готов ответить на вопросы.",
-                    "Приветствую! Я Loki — бесплатный ИИ-ассистент."
-                )
-                greetings[(text.hashCode() and 0x7FFFFFFF) % greetings.size]
-            }
-            t.contains("код") || t.contains("программ") -> {
-                "Я помогу с программированием. Напишите на каком языке нужен код."
-            }
-            t.contains("как") && t.contains("работает") -> {
-                "Объясню подробно. Напишите, что именно вас интересует."
-            }
-            t.contains("напиши") || t.contains("составь") -> {
-                "Я могу написать текст на любую тему. Укажите тему."
-            }
-            t.contains("план") || t.contains("совет") -> {
-                "Я помогу составить план. Расскажите подробнее."
-            }
-            t.contains("кто ты") || t.contains("ты такой") -> {
-                "Я Loki — бесплатный ИИ-ассистент."
-            }
-            t.contains("спасибо") || t.contains("благодар") -> {
-                "Пожалуйста! Обращайтесь ещё."
-            }
-            t.contains("пока") || t.contains("до свидан") -> {
-                "До встречи!"
-            }
-            else -> {
-                "Понял ваш вопрос: «$text». Я Loki — бесплатный ИИ-ассистент."
+    /// Локальный ответчик без инета — для слабых устройств
+    private fun runLocalReply(chatId: String, aiId: String, userText: String) {
+        val response = localReply(userText)
+        val chars = response.toCharArray()
+        var pos = 0
+        sendJob = viewModelScope.launch {
+            busy = true
+            try {
+                while (pos < chars.length) {
+                    val step = chars.length.coerceAtMost(pos + 6)
+                    delta = chars.subArray(pos, step).joinToString("")
+                    patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
+                    pos = step
+                    withContext(Dispatchers.Main) {
+                        kotlinx.coroutines.delay(25)
+                    }
+                }
+                addDevLog("LOCAL: $response")
+                patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
+            } catch (e: Exception) {
+                patchMessage(chatId, aiId) {
+                    it.copy(streaming = false, text = "Ошибка локальной модели: ${e.message}")
+                }
+            } finally {
+                busy = false
+                sendJob = null
+                persistNow()
             }
         }
     }
+
+    private var delta = StringBuilder()
+
+    private fun localReply(text: String): String {
+        val t = text.trim().lowercase()
+        return when {
+            t.isEmpty() -> "Напиши что-нибудь, я отвечу."
+            t.contains("привет") || t.contains("здравств") || t.contains("хай") ->
+                "Привет! Я Loki — локальная модель. Работаю без интернета прямо на твоём устройстве."
+            t.contains("кто ты") || t.contains("что такое локи") || t.contains("кто я") ->
+                "Я Loki — бесплатный ИИ-ассистент. Локальная версия для слабых устройств."
+            t.contains("код") || t.contains("программ") || t.contains("python") || t.contains("kotlin") ||
+            t.contains("java") || t.contains("js") || t.contains("javascript") ->
+                "Я помогу с программированием! Напиши, на каком языке нужен код, и что он должен делать."
+            t.contains("как") || t.contains("почему") || t.contains("что такое") ||
+            t.contains("объясни") || t.contains("расскажи") ->
+                "Отличный вопрос! Я локальная модель без интернета, поэтому мои знания ограничены. Опиши подробнее, и я попробую ответить из того, что знаю."
+            t.contains("перевод") || t.contains("переведи") || t.contains("англий") ||
+            t.contains("немецк") || t.contains("китайск") || t.contains("японск") ->
+                "Я могу попробовать перевести текст. Пришли фразу и укажи язык, на который переводить."
+            t.contains("план") || t.contains("совет") || t.contains("задач") ||
+            t.contains("рецепт") || t.contains("готовить") ->
+                "Я помогу составить план или дать совет. Расскажи подробнее, что тебе нужно."
+            t.contains("спасибо") || t.contains("благодар") || t.contains("спс") ->
+                listOf("Пожалуйста! Обращайся ещё.", "Рад был помочь! Что дальше?", "Всегда пожалуйста! Есть ещё вопросы?")
+                    .toTypedArray()[java.util.Random().nextInt(3)]
+            t.contains("пока") || t.contains("до свидан") || t.contains("до встречи") || t.contains("прощай") ->
+                listOf("До встречи! Обращайся, если понадобится помощь.",
+                    "Пока! Буду рад пообщаться ещё.", "До скорого! Удачи!")
+                    .toTypedArray()[java.util.Random().nextInt(3)]
+            else ->
+                "Понял: «$text». Я Loki — локальная модель без интернета. Я могу отвечать на простые вопросы, помогать с текстом и кодом. Для более умных ответов подключи OpenRouter или Groq в настройках."
+        }
+    }
+
+    // ----------------------------------------------------------------
 
     private fun titleFrom(text: String, atts: List<Attachment>): String {
         val base = text.ifBlank { if (atts.any { it.isImage }) "Изображение" else "Файл" }
         return base.replace('\n', ' ').take(40).ifBlank { "Новый чат" }
     }
 
-    private fun userQuery(m: Message): String = buildString {
+    private fun userQuery2(m: Message): String = buildString {
+        append(m.text)
+        m.attachments.filter { !it.isImage && it.text != null }.forEach {
+            append(" ").append(it.text!!.take(500))
+        }
+        m.attachments.filter { it.isImage }.forEach { append(" ").append(it.name) }
+    }.take(400)
+
+    // Перенаправляем на локальный userQuery из метода send? Ниже оставляем старый метод для совместимости, но он не используется.
+    private fun oldUserQuery(m: Message): String = buildString {
         append(m.text)
         m.attachments.filter { !it.isImage && it.text != null }.forEach {
             append(" ").append(it.text!!.take(500))

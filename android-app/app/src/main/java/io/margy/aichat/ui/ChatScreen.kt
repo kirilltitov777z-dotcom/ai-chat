@@ -75,13 +75,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
 import io.margy.aichat.data.GROQ_PRESETS
-import io.margy.aichat.data.MODEL_DESCRIPTIONS
+import io.margy.aichat.data.LOCAL_PRESETS
 import io.margy.aichat.data.POLLINATIONS_PRESETS
-import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.util.Media
@@ -133,12 +133,12 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
         Icon(
             Icons.Rounded.Person,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.size(56.dp),
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
         Text(
-            "LotiChat",
+            "LokiChat",
             style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold)
         )
         Text(
@@ -146,27 +146,27 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
         OutlinedTextField(
             value = user,
             onValueChange = { user = it },
             label = { Text("Логин") },
-            placeholder = { Text("ваш логин") },
+            placeholder = { Text("логин") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(10.dp))
         OutlinedTextField(
             value = pass,
             onValueChange = { pass = it },
             label = { Text("Пароль") },
-            placeholder = { Text("ваш пароль") },
+            placeholder = { Text("пароль") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(14.dp))
 
         if (!mode) {
             Button(
@@ -201,15 +201,15 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
         }
 
         if (s.accountUser.isNotBlank() && !s.accountLoggedIn) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(14.dp))
             Text(
-                "Аккаунт: ${s.accountUser}. Введите пароль.",
+                "Аккаунт: ${s.accountUser}. Введи пароль.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary
             )
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
         TextButton(onClick = {
             vm.closeLogin()
             vm.toChatScreen()
@@ -219,13 +219,14 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 
 private fun modelLabel(vm: ChatViewModel): String {
     val model = vm.settings.model.ifBlank { "openai" }
+        .substringAfterLast('/')
+        .removePrefix("demo:")
     val provider = when (vm.settings.provider) {
         "groq" -> "Groq"
         "openrouter" -> "OpenRouter"
         "custom" -> "Свой"
-        "pollinations" -> "Бесплатно (без ключа)"
-        "local" -> "Локальный (оффлайн)"
-        else -> "ИИ"
+        "pollinations" -> "Бесплатно"
+        else -> "Локал"
     }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
@@ -278,7 +279,7 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                             Text(
                                 "LokiChat",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.SemiBold
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
@@ -286,9 +287,10 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.clickable { vm.openModelPicker() }
                                 )
-                                val desc = modelDescription(vm.settings.model)
+                                val desc = io.margy.aichat.data.modelDescription(vm.settings.model)
                                 if (desc.isNotBlank()) {
                                     Text(
                                         " · $desc",
@@ -376,43 +378,47 @@ private fun EmptyState(vm: ChatViewModel) {
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(48.dp))
+        Spacer(Modifier.height(32.dp))
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
-            modifier = Modifier.size(88.dp)
+            modifier = Modifier.size(72.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Rounded.Chat,
                     contentDescription = null,
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(40.dp),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
-        Spacer(Modifier.height(20.dp))
-        Text("Привет!", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(16.dp))
         Text(
-            "Это Loki — бесплатный ИИ-ассистент. Работает без ключа и без регистрации.",
+            "Привет!",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Это Loki — бесплатный ИИ-ассистент.\nРаботает без ключа и без регистрации.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(24.dp))
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            shape = RoundedCornerShape(18.dp)
+            shape = RoundedCornerShape(16.dp)
         ) {
             Column(
-                Modifier.padding(16.dp),
+                Modifier.padding(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     "Модель: ${vm.settings.model.substringAfterLast('/')}",
                     style = MaterialTheme.typography.titleSmall
                 )
-                val desc = modelDescription(vm.settings.model)
+                val desc = io.margy.aichat.data.modelDescription(vm.settings.model)
                 if (desc.isNotBlank()) {
                     Spacer(Modifier.height(2.dp))
                     Text(
@@ -423,7 +429,7 @@ private fun EmptyState(vm: ChatViewModel) {
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Напишите сообщение — и поехали",
+                    "Напиши сообщение — и поехали",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -467,7 +473,7 @@ private fun MessageRow(
                 else RoundedCornerShape(20.dp, 20.dp, 20.dp, 6.dp),
                 color = bg,
                 modifier = Modifier
-                    .widthIn(max = 320.dp)
+                    .widthIn(max = 300.dp)
                     .combinedClickable(onClick = {}, onLongClick = { menu = true })
             ) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
@@ -543,7 +549,7 @@ private fun AttachmentsRow(list: List<Attachment>, onImage: (String) -> Unit) {
                         bitmap = bmp.asImageBitmap(),
                         contentDescription = a.name,
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(88.dp)
                             .clip(RoundedCornerShape(14.dp))
                             .clickable { onImage(path) },
                         contentScale = ContentScale.Crop
@@ -697,7 +703,7 @@ private fun Composer(vm: ChatViewModel) {
                 verticalAlignment = Alignment.Bottom
             ) {
                 Box {
-                    IconButton(onClick = { attachMenu = true }, modifier = Modifier.size(44.dp)) {
+                    IconButton(onClick = { attachMenu = true }, modifier = Modifier.size(40.dp)) {
                         Icon(
                             Icons.Rounded.Add,
                             contentDescription = "Прикрепить",
@@ -726,7 +732,7 @@ private fun Composer(vm: ChatViewModel) {
                 BasicTextField(
                     value = vm.draft,
                     onValueChange = { vm.draft = it },
-                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f).padding(horizontal = 4.dp, vertical = 8.dp),
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                     cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                     maxLines = 5,
@@ -750,7 +756,7 @@ private fun Composer(vm: ChatViewModel) {
 
                 FilledIconButton(
                     onClick = { vm.send() },
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(40.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = if (vm.busy) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         contentColor = if (vm.busy) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onPrimary
@@ -759,7 +765,7 @@ private fun Composer(vm: ChatViewModel) {
                     Icon(
                         if (vm.busy) Icons.Rounded.Stop else Icons.Rounded.ArrowUpward,
                         contentDescription = if (vm.busy) "Стоп" else "Отправить",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -782,7 +788,7 @@ private fun MiniToggle(
             contentColor = if (on) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
         )
     ) {
-        Icon(icon, contentDescription = description, modifier = Modifier.size(18.dp))
+        Icon(icon, contentDescription = description, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -796,20 +802,20 @@ private fun PendingChip(att: Attachment, onRemove: () -> Unit) {
                     Image(
                         bmp.asImageBitmap(),
                         contentDescription = att.name,
-                        modifier = Modifier.size(64.dp),
+                        modifier = Modifier.size(56.dp),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Box(Modifier.size(64.dp))
+                    Box(Modifier.size(56.dp))
                 }
             }
         } else {
             Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
                 Row(
-                    Modifier.height(64.dp).padding(horizontal = 10.dp),
+                    Modifier.height(56.dp).padding(horizontal = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Rounded.Description, null, Modifier.size(18.dp))
+                    Icon(Icons.Rounded.Description, null, Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
                     Text(att.name.take(18), style = MaterialTheme.typography.labelMedium, maxLines = 1)
                 }
@@ -821,7 +827,7 @@ private fun PendingChip(att: Attachment, onRemove: () -> Unit) {
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 4.dp, y = (-4).dp)
-                .size(20.dp)
+                .size(18.dp)
                 .clickable { onRemove() }
         ) {
             Icon(
@@ -838,8 +844,8 @@ private fun PendingChip(att: Attachment, onRemove: () -> Unit) {
 private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
     ModalDrawerSheet(drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow) {
         Column(Modifier.fillMaxHeight()) {
-            Spacer(Modifier.height(20.dp))
-            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.height(16.dp))
+            Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primaryContainer,
@@ -849,14 +855,14 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                         Icon(
                             Icons.Rounded.Chat,
                             null,
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text("LotiChat", style = MaterialTheme.typography.titleLarge)
+                    Text("LokiChat", style = MaterialTheme.typography.titleLarge)
                     Text(
                         if (vm.isLoggedIn) "Аккаунт: ${vm.settings.accountUser}" else "Без аккаунта",
                         style = MaterialTheme.typography.labelSmall,
@@ -864,7 +870,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                     )
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
             NavigationDrawerItem(
                 label = { Text("Новый чат") },
                 icon = { Icon(Icons.Rounded.Add, null) },
@@ -872,7 +878,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 onClick = { vm.newChat(); close() },
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
-            HorizontalDivider(Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
             LazyColumn(Modifier.weight(1f)) {
                 items(vm.chats, key = { it.id }) { chat ->
                     NavigationDrawerItem(
@@ -896,7 +902,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                         selected = chat.id == vm.currentId,
                         onClick = { vm.selectChat(chat.id); close() },
                         badge = {
-                            IconButton(onClick = { vm.deleteChat(chat.id) }, modifier = Modifier.size(26.dp)) {
+                            IconButton(onClick = { vm.deleteChat(chat.id) }, modifier = Modifier.size(24.dp)) {
                                 Icon(Icons.Rounded.DeleteOutline, "Удалить", Modifier.size(16.dp))
                             }
                         },
@@ -904,7 +910,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                     )
                 }
             }
-            HorizontalDivider(Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+            HorizontalDivider(Modifier.padding(horizontal = 18.dp, vertical = 4.dp))
             NavigationDrawerItem(
                 label = { Text("Настройки") },
                 icon = { Icon(Icons.Rounded.Settings, null) },
@@ -927,11 +933,11 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LokiChat 1.0 · Loki + Pollinations")
+                    vm.showToast("LokiChat 1.0 · Loki")
                 },
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
         }
     }
 }
@@ -965,6 +971,7 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
     val presets = when (vm.settings.provider) {
         "groq" -> GROQ_PRESETS
         "pollinations" -> POLLINATIONS_PRESETS
+        "local" -> LOCAL_PRESETS
         else -> emptyList()
     }
     val all = vm.models.ifEmpty { presets }
@@ -1004,12 +1011,11 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    id.substringAfterLast('/'),
+                                    id,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    maxLines = 1
                                 )
-                                val desc = modelDescription(id)
+                                val desc = io.margy.aichat.data.modelDescription(id)
                                 if (desc.isNotBlank()) {
                                     Text(
                                         desc,
@@ -1018,7 +1024,7 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                                     )
                                 }
                                 if (id.startsWith("demo:") || id.endsWith(":free") ||
-                                    vm.settings.provider == "pollinations"
+                                    vm.settings.provider == "pollinations" || vm.settings.provider == "local"
                                 ) {
                                     Text(
                                         "бесплатно",

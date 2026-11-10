@@ -6,18 +6,17 @@ const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный 
 
 const val PROVIDER_POLLINATIONS = "pollinations"
 const val PROVIDER_GROQ = "groq"
-const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_OPENROUTER = "openrouter"
-const val PROVIDER_CUSTOM = "custom"
 const val PROVIDER_LOCAL = "local"
+const val PROVIDER_CUSTOM = "custom"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки
 const val DEFAULT_API_KEY = "sk-24bb60f46a5c4a108fcfad60aacd4270"
 
-// Модель по умолчанию — бесплатная без ключа
+// Модель по умолчанию называется Loki
 const val DEFAULT_MODEL = "openai"
 
-// Бесплатные модели Pollinations (без ключа)
+// Бесплатные модели Pollinations (без ключа вообще)
 val POLLINATIONS_PRESETS = listOf(
     "openai",
     "openai-fast",
@@ -30,55 +29,6 @@ val POLLINATIONS_PRESETS = listOf(
     "qwen-coder"
 )
 
-// Все модели OpenRouter для списка
-val MODEL_PRESETS = listOf(
-    "deepseek/deepseek-chat-v3-0324:free",
-    "deepseek/deepseek-r1:free",
-    "google/gemini-2.0-flash-exp:free",
-    "google/gemini-2.5-flash-preview:free",
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "qwen/qwen-2.5-72b-instruct:free",
-    "qwen/qwen-2.5-vl-72b-instruct:free",
-    "nvidia/nemotron-70b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "meta-llama/llama-3.1-8b-instruct:free"
-)
-
-// Описание каждой модели — показывается мелким текстом под названием
-val MODEL_DESCRIPTIONS = mapOf(
-    // Pollinations (без ключа)
-    "openai" to "Универсальная · быстрая",
-    "openai-fast" to "Самый быстрый ответ",
-    "openai-large" to "Больше знаний, медленнее",
-    "gpt-oss-20b" to "Открытая модель OpenAI",
-    "gpt-oss-120b" to "Самая умная, но тяжёлая",
-    "mistral" to "Сильная математика",
-    "llama-roblox" to "Лёгкая и быстрая",
-    "micronet" to "Мини-размер, быстро",
-    "qwen-coder" to "Специалист по коду",
-    // Groq
-    "llama-3.1-8b-instant" to "Мгновенный ответ",
-    "gemma2-9b-it" to "От Google, быстрая",
-    "llama-3.2-3b-preview" to "Лёгкая, шустрая",
-    "llama-3.2-1b-preview" to "Самая лёгкая",
-    "mixtral-8x7b-32768" to "Длинная память",
-    // OpenRouter
-    "deepseek/deepseek-chat-v3-0324:free" to "Китайский DeepSeek",
-    "deepseek/deepseek-r1:free" to "С рассуждениями",
-    "google/gemini-2.0-flash-exp:free" to "От Google, быстрая",
-    "google/gemini-2.5-flash-preview:free" to "Новая от Google",
-    "meta-llama/llama-3.3-70b-instruct:free" to "Универсальная, умная",
-    "qwen/qwen-2.5-72b-instruct:free" to "Мощная, с кодом",
-    "qwen/qwen-2.5-vl-72b-instruct:free" to "Понимает картинки",
-    "nvidia/nemotron-70b-instruct:free" to "От NVIDIA, точная",
-    "mistralai/mistral-7b-instruct:free" to "Компактная, шустрая",
-    "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая",
-    // Локальная
-    "local" to "Без интернета · для слабых устройств"
-)
-
-fun modelDescription(id: String): String = MODEL_DESCRIPTIONS[id] ?: ""
-
 // Бесплатные модели Groq
 val GROQ_PRESETS = listOf(
     "llama-3.1-8b-instant",
@@ -88,14 +38,13 @@ val GROQ_PRESETS = listOf(
     "mixtral-8x7b-32768"
 )
 
-// Локальная модель — без интернета, для слабых устройств
-const val LOCAL_MODEL = "local"
-val LOCAL_MODEL_DESCRIPTION = "Без интернета · для слабых устройств"
+// Локальные модели — работают БЕЗ интернета, для слабых устройств
+val LOCAL_PRESETS = listOf("local-mini")
 
 // Описание каждой модели — показывается мелким текстом под названием
 val MODEL_DESCRIPTIONS = mapOf(
     // Pollinations (без ключа)
-    "openai" to "Универсальная · быстрая",
+    "openai" to "Универсальная · бесплатно",
     "openai-fast" to "Самый быстрый ответ",
     "openai-large" to "Больше знаний, медленнее",
     "gpt-oss-20b" to "Открытая модель OpenAI",
@@ -121,8 +70,8 @@ val MODEL_DESCRIPTIONS = mapOf(
     "nvidia/nemotron-70b-instruct:free" to "От NVIDIA, точная",
     "mistralai/mistral-7b-instruct:free" to "Компактная, шустрая",
     "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая",
-    // Локальная
-    "local" to "Без интернета · для слабых устройств"
+    // Локальные
+    "local-mini" to "Без интернета · офлайн"
 )
 
 fun modelDescription(id: String): String = MODEL_DESCRIPTIONS[id] ?: ""
@@ -147,11 +96,14 @@ data class AppSettings(
 ) {
     fun defaultModel(): String = when (provider) {
         PROVIDER_GROQ -> GROQ_PRESETS.first()
-        PROVIDER_LOCAL -> LOCAL_MODEL
+        PROVIDER_LOCAL -> LOCAL_PRESETS.first()
+        PROVIDER_OPENROUTER -> DEFAULT_MODEL
         else -> DEFAULT_MODEL
     }
 
-    fun isDemo(): Boolean = provider == PROVIDER_LOCAL || provider == PROVIDER_POLLINATIONS || apiKey.isBlank()
+    fun isDemo(): Boolean = provider == "demo"
+    fun isLocal(): Boolean = provider == PROVIDER_LOCAL
+    fun isPollinations(): Boolean = provider == PROVIDER_POLLINATIONS
 }
 
 class SettingsStore(context: Context) {
@@ -159,7 +111,7 @@ class SettingsStore(context: Context) {
 
     fun load(): AppSettings = AppSettings(
         provider = sp.getString("provider", PROVIDER_POLLINATIONS) ?: PROVIDER_POLLINATIONS,
-        apiKey = sp.getString("apiKey", "").orEmpty(),
+        apiKey = sp.getString("apiKey", DEFAULT_API_KEY).orEmpty(),
         model = sp.getString("model", DEFAULT_MODEL).orEmpty(),
         baseUrl = sp.getString("baseUrl", "").orEmpty(),
         system = sp.getString("system", DEFAULT_SYSTEM) ?: DEFAULT_SYSTEM,
