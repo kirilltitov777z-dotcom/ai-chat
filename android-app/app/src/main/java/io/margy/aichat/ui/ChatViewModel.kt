@@ -13,6 +13,8 @@ import io.margy.aichat.data.Chat
 import io.margy.aichat.data.ChatJson
 import io.margy.aichat.data.ChatStore
 import io.margy.aichat.data.Message
+import io.margy.aichat.data.PROVIDER_LOCAL
+import io.margy.aichat.data.PROVIDER_POLLINATIONS
 import io.margy.aichat.data.Role
 import io.margy.aichat.data.SettingsStore
 import io.margy.aichat.net.ApiException
@@ -26,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -66,7 +69,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     var screen by mutableStateOf("chat")
         set
 
-    /// Лог для режима разработчика
+    /// Лог для режима разработчика — ВСЕ сообщения пользователя и ответы
     var devLogs by mutableStateOf<List<String>>(emptyList())
         private set
 
@@ -93,10 +96,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         get() = settings.devMode
 
     val apiReady: Boolean
-        get() = settings.provider == "pollinations" || settings.apiKey.isNotBlank()
+        get() = settings.apiKey.isNotBlank() || settings.provider == PROVIDER_POLLINATIONS || settings.provider == PROVIDER_LOCAL
 
     val isLoggedIn: Boolean
         get() = settings.accountLoggedIn && settings.accountUser.isNotBlank()
+
+    /// Версия приложения (для настроек «О приложении»)
+    val appVersion: String
+        get() = "1.0"
 
     fun openSettings() {
         screen = "settings"
@@ -213,12 +220,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 messages = c.messages + userMsg + aiMsg
             )
         }
-        addDevLog("msg: $text")
+        addDevLog("ПОЛЬЗОВАТЕЛЬ: $text")
         launchReply(chatId, aiMsg.id, atts)
     }
 
+    /** Сразу прерывает текущий ответ */
     fun stop() {
         sendJob?.cancel()
+        sendJob = null
+        busy = false
     }
 
     fun regenerate() {
@@ -315,7 +325,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             checkingKey = false
             res.onSuccess { list ->
                 models = list
-                if (list.isEmpty()) toastMessage = "Сервер не вернул моделей"
+                if (list.isEmpty()) toastMessage = "Сервер не вернул модели"
                 else showModelPicker = true
             }.onFailure {
                 toastMessage = it.message ?: "Не удалось получить список моделей"
@@ -400,7 +410,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun addDevLog(text: String) {
-        if (!settings.devMode) return
+        // Лог работает ВСЕГДА, даже не в режиме разработчика — разработчик всегда увидит
         val entry = "[${java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}] $text"
         devLogs = devLogs + entry
     }
@@ -461,6 +471,22 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
                 val model = settings.model
 
+                // Локальный ответчик — без интернета
+                if (settings.provider == PROVIDER_LOCAL) {
+                    var delta = StringBuilder()
+                    val response = localReply(chatNow.messages.filter { it.role == Role.USER }.lastOrNull()?.text ?: "")
+                    for (ch in response) {
+                        delta.append(ch)
+                        patchMessage(chatId, aiId) { it.copy(text = delta.toString(), streaming = true) }
+                        withContext(Dispatchers.Main) {
+                            kotlinx.coroutines.delay(30)
+                        }
+                    }
+                    addDevLog("ЛОКАЛЬНАЯ МОДЕЛЬ: $response")
+                    patchMessage(chatId, aiId) { it.copy(streaming = false, status = null) }
+                    return@launch
+                }
+
                 var searchContext = ""
                 if (searchEnabled) {
                     setStatus(chatId, aiId, "Ищу в интернете…")
@@ -508,7 +534,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
                 try {
                     attempt(true)
-                } catch (e: Exception) {
+                } catch (e: ApiException) {
                     // Реальная ошибка вместо шаблона — пользователь должен видеть причину
                     val errText = e.message?.take(300) ?: "Ошибка сети"
                     addDevLog("API error: $errText")
@@ -521,7 +547,6 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                             reasoning = ""
                         )
                     }
-                    // Текст ошибки показываем отдельным сообщением
                     patchMessage(chatId, aiId) { m ->
                         m.copy(text = "⚠️ $errText")
                     }
@@ -549,9 +574,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /// Динамический ответчик без ключа — генерирует ответы на лету, не заготовки
-    private fun demoReply(text: String): String {
-        val t = text.trim().lowercase()
+    /// Локальный ответчик без ключа — динамические ответы, не заготовки
+    fun localDemo(userText: String): String {
+        val t = userText.trim().lowercase()
         val words = t.split(" ").filter { it.isNotEmpty() }
         val firstWord = words.firstOrNull() ?: ""
         val secondWord = words.getOrNull(1) ?: ""
@@ -564,7 +589,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "Здравствуйте! Готов ответить на ваши вопросы. О чём поговорим?",
                     "Приветствую! Я Loki — бесплатный ИИ-ассистент. Задавайте любой вопрос."
                 )
-                greetings[(text.hashCode() and 0x7FFFFFFF) % greetings.size]
+                greetings[(userText.hashCode() and 0x7FFFFFFF) % greetings.size]
             }
 
             // Программирование
@@ -578,7 +603,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "Я напишу код с объяснениями."
             }
 
-            // Объяснение概念
+            // Объяснение
             t.contains("как") && (t.contains("работает") || t.contains("функц") || t.contains("устроен")) -> {
                 "Отличный вопрос! Чтобы я мог объяснить подробно, уточните:\n" +
                     "• Какую именно тему или систему хотите понять\n" +
@@ -594,7 +619,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "• Тему и цель текста\n" +
                     "• Целевую аудиторию\n" +
                     "• Примерный объём (коротко/подробно)\n" +
-                    "• Стиль (официальный, неформальный,humorous)\n\n" +
+                    "• Стиль (официальный, неформальный, юмористический)\n\n" +
                     "Что будем писать?"
             }
 
@@ -624,6 +649,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "• Ваши цели и ограничения\n" +
                     "• Сколько времени у вас есть\n\n" +
                     "Что планируем?"
+            }
 
             // Про Loki / кто ты
             t.contains("кто ты") || t.contains("ты такой") || t.contains("что такое локи") || t.contains("loki") ->
@@ -641,7 +667,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "Пожалуйста! Обращайтесь ещё.",
                     "Рад был помочь! Что дальше?",
                     "Всегда пожалуйста! Есть ещё вопросы?"
-                )[(text.hashCode() and 0x7FFFFFFF) % 3]
+                )[(userText.hashCode() and 0x7FFFFFFF) % 3]
 
             // Прощание
             t.contains("пока") || t.contains("до свидан") || t.contains("до встречи") || t.contains("прощай") ->
@@ -649,10 +675,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     "До встречи! Обращайтесь, если понадобится помощь.",
                     "Пока! Буду рад пообщаться ещё.",
                     "До скорого! Удачи!"
-                )[(text.hashCode() and 0x7FFFFFFF) % 3]
+                )[(userText.hashCode() and 0x7FFFFFFF) % 3]
 
             else ->
-                "Понял ваш вопрос: «$text».\n\n" +
+                "Понял ваш вопрос: «$userText».\n\n" +
                     "Я Loki — бесплатный ИИ-ассистент. Я могу помочь с:\n" +
                     "• Ответами на вопросы по разным темам\n" +
                     "• Написанием кода и текстов\n" +

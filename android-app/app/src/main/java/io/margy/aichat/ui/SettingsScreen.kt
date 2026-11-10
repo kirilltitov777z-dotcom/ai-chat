@@ -6,17 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
@@ -33,12 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import io.margy.aichat.data.*
+import io.margy.aichat.data.AppSettings
+import io.margy.aichat.data.PROVIDER_LOCAL
+import io.margy.aichat.data.PROVIDER_POLLINATIONS
 import java.util.Locale
 
 @Composable
@@ -216,7 +211,8 @@ private fun TabModel(
                 PROVIDER_POLLINATIONS to "Бесплатно (без ключа)",
                 PROVIDER_GROQ to "Groq",
                 PROVIDER_OPENROUTER to "OpenRouter",
-                PROVIDER_CUSTOM to "Свой сервер"
+                PROVIDER_CUSTOM to "Свой сервер",
+                PROVIDER_LOCAL to "Локальный (оффлайн)"
             ).forEach { (value, label) ->
                 FilterChip(
                     selected = s.provider == value,
@@ -231,7 +227,7 @@ private fun TabModel(
             }
         }
 
-        if (s.provider != PROVIDER_POLLINATIONS) {
+        if (s.provider != PROVIDER_POLLINATIONS && s.provider != PROVIDER_LOCAL) {
             OutlinedTextField(
                 value = s.apiKey,
                 onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
@@ -248,7 +244,7 @@ private fun TabModel(
                     }
                 }
             )
-        } else {
+        } else if (s.provider == PROVIDER_POLLINATIONS) {
             Surface(
                 color = MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(16.dp),
@@ -454,16 +450,16 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("LotiChat", style = MaterialTheme.typography.titleLarge)
+        Text("LokiChat", style = MaterialTheme.typography.titleLarge)
         Text(
-            "Версия 2.7",
+            "Версия 1.0",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             "Нативное приложение на Kotlin. " +
                 "Ваша переписка сохраняется на телефоне в аккаунте. " +
-                "Поддерживает OpenRouter и Groq.",
+                "Поддерживает Pollinations, Groq, OpenRouter и локальный режим без интернета.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -489,6 +485,45 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             Icon(Icons.Rounded.DeleteOutline, null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text("Очистить все чаты", color = MaterialTheme.colorScheme.error)
+        }
+        Spacer(Modifier.height(16.dp))
+        Section("Ресурсы") {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        val url = "https://github.com/kirilltitov777z-dotcom/ai-chat"
+                        openUrl(context, url)
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.OpenInNew, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Репозиторий на GitHub")
+                }
+                OutlinedButton(
+                    onClick = {
+                        val url = "https://github.com/kirilltitov777z-dotcom/ai-chat/actions/workflows/build.yml"
+                        openUrl(context, url)
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Rounded.Build, null, Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Сборка на GitHub")
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            TextButton(
+                onClick = {
+                    val url = "https://github.com/kirilltitov777z-dotcom/ai-chat/releases"
+                    openUrl(context, url)
+                }
+            ) {
+                Text("Все версии в Releases")
+            }
         }
     }
 }

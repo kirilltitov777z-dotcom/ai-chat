@@ -80,7 +80,7 @@ import androidx.core.content.FileProvider
 import io.margy.aichat.data.Attachment
 import io.margy.aichat.data.GROQ_PRESETS
 import io.margy.aichat.data.POLLINATIONS_PRESETS
-import io.margy.aichat.data.modelDescription
+import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.data.Message
 import io.margy.aichat.data.Role
 import io.margy.aichat.util.Media
@@ -218,13 +218,13 @@ private fun LoginScreen(vm: ChatViewModel, onLogin: () -> Unit) {
 
 private fun modelLabel(vm: ChatViewModel): String {
     val model = vm.settings.model.ifBlank { "openai" }
-        .substringAfterLast('/')
-        .removePrefix("demo:")
     val provider = when (vm.settings.provider) {
         "groq" -> "Groq"
         "openrouter" -> "OpenRouter"
         "custom" -> "Свой"
-        else -> "Бесплатно"
+        "pollinations" -> "Бесплатно (без ключа)"
+        "local" -> "Локальный (оффлайн)"
+        else -> "ИИ"
     }
     val extras = ArrayList<String>()
     if (vm.thinking) extras.add("мышление")
@@ -275,7 +275,7 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                     title = {
                         Column {
                             Text(
-                                "Loki",
+                                "LokiChat",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -285,8 +285,7 @@ private fun ChatScreen(vm: ChatViewModel, onOpenSettings: () -> Unit) {
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.clickable { vm.openModelPicker() }
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 val desc = modelDescription(vm.settings.model)
                                 if (desc.isNotBlank()) {
@@ -377,7 +376,6 @@ private fun EmptyState(vm: ChatViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(48.dp))
-        // Логотип-атом в приложении
         Surface(
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primaryContainer,
@@ -928,7 +926,7 @@ private fun ChatDrawer(vm: ChatViewModel, close: () -> Unit) {
                 selected = false,
                 onClick = {
                     close()
-                    vm.showToast("LotiChat 2.7 · Loki + Groq")
+                    vm.showToast("LokiChat 1.0 · Loki + Pollinations")
                 },
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp)
             )
@@ -1010,7 +1008,6 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                // Мелкий текст: что это за модель
                                 val desc = modelDescription(id)
                                 if (desc.isNotBlank()) {
                                     Text(
@@ -1019,7 +1016,6 @@ private fun ModelPickerDialog(vm: ChatViewModel) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                // Пометка бесплатности
                                 if (id.startsWith("demo:") || id.endsWith(":free") ||
                                     vm.settings.provider == "pollinations"
                                 ) {

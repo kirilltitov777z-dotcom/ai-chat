@@ -5,6 +5,7 @@ import io.margy.aichat.data.Message
 import io.margy.aichat.data.PROVIDER_CUSTOM
 import io.margy.aichat.data.PROVIDER_DEEPSEEK
 import io.margy.aichat.data.PROVIDER_GROQ
+import io.margy.aichat.data.PROVIDER_LOCAL
 import io.margy.aichat.data.PROVIDER_OPENROUTER
 import io.margy.aichat.data.PROVIDER_POLLINATIONS
 import io.margy.aichat.data.Role
@@ -50,7 +51,7 @@ object ChatApi {
             "https://openrouter.ai/api/v1/chat/completions",
             s.apiKey,
             mapOf(
-                "X-Title" to "LotiChat"
+                "X-Title" to "LokiChat"
             )
         )
         PROVIDER_CUSTOM -> {
@@ -66,14 +67,14 @@ object ChatApi {
             "https://openrouter.ai/api/v1/chat/completions",
             s.apiKey,
             mapOf(
-                "X-Title" to "LotiChat"
+                "X-Title" to "LokiChat"
             )
         )
     }
 
     fun effectiveModel(s: AppSettings, thinking: Boolean): String {
         val current = s.model.ifBlank { s.defaultModel() }
-        if (s.provider == "demo") return current
+        if (s.provider == PROVIDER_LOCAL || s.provider == PROVIDER_POLLINATIONS) return current
         if (!thinking) return current
         return when (s.provider) {
             PROVIDER_DEEPSEEK -> "deepseek-reasoner"
@@ -81,7 +82,7 @@ object ChatApi {
             PROVIDER_CUSTOM -> current
             else -> current
         }.let { model ->
-            if (s.provider != "openrouter") return@let model
+            if (s.provider != PROVIDER_OPENROUTER) return@let model
             if (Regex("r1|reasoner|thinking|qwq|o1|o3", RegexOption.IGNORE_CASE).containsMatchIn(model)) model
             else "deepseek/deepseek-r1:free"
         }
@@ -157,7 +158,7 @@ object ChatApi {
         put("messages", messagesJson(history, systemPrompt(s, searchContext), withImages))
         put("stream", true)
         put("temperature", s.temperature.toDouble())
-        if (thinking && s.provider == "openrouter") {
+        if (thinking && s.provider == PROVIDER_OPENROUTER) {
             put("reasoning", JSONObject().put("enabled", true))
         }
     }
@@ -174,7 +175,7 @@ object ChatApi {
     ) = withContext(Dispatchers.IO) {
         val ep = endpoint(settings)
         if (ep.url.isBlank()) throw ApiException(0, "Не указан адрес сервера в настройках")
-        if (ep.key.isBlank() && settings.provider != PROVIDER_POLLINATIONS) {
+        if (ep.key.isBlank() && settings.provider != PROVIDER_POLLINATIONS && settings.provider != PROVIDER_LOCAL) {
             throw ApiException(0, "Не указан API-ключ — открой настройки")
         }
 
@@ -307,5 +308,12 @@ object ChatApi {
                 ids
             }
         }
+    }
+
+    /** Локальный ответчик без интернета — для слабых устройств */
+    suspend fun localReply(settings: AppSettings, history: List<Message>): String {
+        val lastUser = history.lastOrNull { it.role == Role.USER }
+        val q = lastUser?.text ?: ""
+        return io.margy.aichat.ui.ChatViewModel.localDemo(q)
     }
 }

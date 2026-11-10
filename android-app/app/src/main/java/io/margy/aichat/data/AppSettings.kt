@@ -4,28 +4,19 @@ import android.content.Context
 
 const val DEFAULT_SYSTEM = "Ты — Loki, дружелюбный и умный ассистент. Отвечай по делу, на русском языке, если не попросили иначе. Оформляй ответ Markdown-ом: списки, **жирный**, `код`."
 
-const val PROVIDER_OPENROUTER = "openrouter"
-const val PROVIDER_GROQ = "groq"
-const val PROVIDER_DEEPSEEK = "deepseek"
 const val PROVIDER_POLLINATIONS = "pollinations"
+const val PROVIDER_GROQ = "groq"
+const val PROVIDER_OPENROUTER = "openrouter"
 const val PROVIDER_CUSTOM = "custom"
+const val PROVIDER_LOCAL = "local"
 
 // Встроенный бесплатный ключ OpenRouter — работает сразу после установки
 const val DEFAULT_API_KEY = "sk-24bb60f46a5c4a108fcfad60aacd4270"
 
-// Модель по умолчанию называется Loki
-const val DEFAULT_MODEL = "deepseek/deepseek-chat-v3-0324:free"
+// Модель по умолчанию — бесплатная без ключа
+const val DEFAULT_MODEL = "openai"
 
-// Бесплатные модели Groq
-val GROQ_PRESETS = listOf(
-    "llama-3.1-8b-instant",
-    "gemma2-9b-it",
-    "llama-3.2-3b-preview",
-    "llama-3.2-1b-preview",
-    "mixtral-8x7b-32768"
-)
-
-// Бесплатные модели Pollinations (БЕЗ ключа вообще)
+// Бесплатные модели Pollinations (без ключа)
 val POLLINATIONS_PRESETS = listOf(
     "openai",
     "openai-fast",
@@ -38,14 +29,20 @@ val POLLINATIONS_PRESETS = listOf(
     "qwen-coder"
 )
 
-// Демо-модели — динамические ответы без ключа (не заготовки, а генерация на лету)
-val BUILTIN_FREE_MODELS = listOf(
-    "demo:claude",
-    "demo:gpt",
-    "demo:deepseek"
+// Бесплатные модели Groq
+val GROQ_PRESETS = listOf(
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
+    "llama-3.2-3b-preview",
+    "llama-3.2-1b-preview",
+    "mixtral-8x7b-32768"
 )
 
-// Короткое описание каждой модели — показывается мелким текстом под названием
+// Локальная модель — без интернета, для слабых устройств
+const val LOCAL_MODEL = "local"
+val LOCAL_MODEL_DESCRIPTION = "Без интернета · для слабых устройств"
+
+// Описание каждой модели — показывается мелким текстом под названием
 val MODEL_DESCRIPTIONS = mapOf(
     // Pollinations (без ключа)
     "openai" to "Универсальная · быстрая",
@@ -73,7 +70,9 @@ val MODEL_DESCRIPTIONS = mapOf(
     "qwen/qwen-2.5-vl-72b-instruct:free" to "Понимает картинки",
     "nvidia/nemotron-70b-instruct:free" to "От NVIDIA, точная",
     "mistralai/mistral-7b-instruct:free" to "Компактная, шустрая",
-    "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая"
+    "meta-llama/llama-3.1-8b-instruct:free" to "Лёгкая, быстрая",
+    // Локальная
+    "local" to "Без интернета · для слабых устройств"
 )
 
 fun modelDescription(id: String): String = MODEL_DESCRIPTIONS[id] ?: ""
@@ -83,7 +82,7 @@ const val DEV_MODE_PASSWORD = "Loti_Dev_2026!@#"
 data class AppSettings(
     val provider: String = PROVIDER_POLLINATIONS,
     val apiKey: String = "",
-    val model: String = "openai",
+    val model: String = DEFAULT_MODEL,
     val baseUrl: String = "",
     val system: String = DEFAULT_SYSTEM,
     val temperature: Float = 0.7f,
@@ -98,11 +97,11 @@ data class AppSettings(
 ) {
     fun defaultModel(): String = when (provider) {
         PROVIDER_GROQ -> GROQ_PRESETS.first()
-        PROVIDER_POLLINATIONS -> "openai"
+        PROVIDER_LOCAL -> LOCAL_MODEL
         else -> DEFAULT_MODEL
     }
 
-    fun isDemo(): Boolean = provider == "demo"
+    fun isDemo(): Boolean = provider == PROVIDER_LOCAL || provider == PROVIDER_POLLINATIONS || apiKey.isBlank()
 }
 
 class SettingsStore(context: Context) {
@@ -111,7 +110,7 @@ class SettingsStore(context: Context) {
     fun load(): AppSettings = AppSettings(
         provider = sp.getString("provider", PROVIDER_POLLINATIONS) ?: PROVIDER_POLLINATIONS,
         apiKey = sp.getString("apiKey", "").orEmpty(),
-        model = sp.getString("model", "openai").orEmpty(),
+        model = sp.getString("model", DEFAULT_MODEL).orEmpty(),
         baseUrl = sp.getString("baseUrl", "").orEmpty(),
         system = sp.getString("system", DEFAULT_SYSTEM) ?: DEFAULT_SYSTEM,
         temperature = sp.getFloat("temperature", 0.7f),
