@@ -21,7 +21,6 @@ import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Visibility
@@ -50,7 +49,7 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
     var keyVisible by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf(0) }
 
-    fun onUpdate(new: AppSettings) {
+    fun saveSettings(new: AppSettings) {
         s = new
         vm.updateSettings(new)
     }
@@ -106,9 +105,9 @@ fun SettingsScreen(vm: ChatViewModel, onBack: () -> Unit) {
             Spacer(Modifier.height(12.dp))
 
             when (selectedTab) {
-                0 -> TabMain(s, ::onUpdate, keyVisible, context, vm)
-                1 -> TabModel(s, ::onUpdate, keyVisible, context, vm)
-                2 -> TabAccount(vm, ::onUpdate)
+                0 -> TabMain(s, ::saveSettings, keyVisible, context, vm)
+                1 -> TabModel(s, ::saveSettings, keyVisible, context, vm)
+                2 -> TabAccount(vm, ::saveSettings)
                 3 -> TabAbout(vm, context)
             }
 
@@ -223,7 +222,7 @@ private fun TabModel(
                     onClick = {
                         if (s.provider != value) {
                             val next = s.copy(provider = value)
-                            onUpdate(next.copy(model = next.defaultModel()))
+                            saveSettings(next.copy(model = next.defaultModel()))
                         }
                     },
                     label = { Text(label) }
@@ -234,7 +233,7 @@ private fun TabModel(
         if (s.provider != PROVIDER_POLLINATIONS && s.provider != PROVIDER_LOCAL) {
             OutlinedTextField(
                 value = s.apiKey,
-                onValueChange = { onUpdate(s.copy(apiKey = it.trim())) },
+                onValueChange = { saveSettings(s.copy(apiKey = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("API-ключ") },
                 singleLine = true,
@@ -269,7 +268,7 @@ private fun TabModel(
         if (s.provider == PROVIDER_CUSTOM) {
             OutlinedTextField(
                 value = s.baseUrl,
-                onValueChange = { onUpdate(s.copy(baseUrl = it.trim())) },
+                onValueChange = { saveSettings(s.copy(baseUrl = it.trim())) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Адрес сервера") },
                 placeholder = { Text("http://192.168.1.10:1234/v1") },
@@ -279,7 +278,7 @@ private fun TabModel(
 
         OutlinedTextField(
             value = s.model,
-            onValueChange = { onUpdate(s.copy(model = it.trim())) },
+            onValueChange = { saveSettings(s.copy(model = it.trim())) },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Модель") },
             singleLine = true
@@ -306,7 +305,7 @@ private fun TabModel(
                                 else MaterialTheme.colorScheme.surfaceContainerLow,
                                 RoundedCornerShape(14.dp)
                             )
-                            .clickable { onUpdate(s.copy(model = id)) }
+                            .clickable { saveSettings(s.copy(model = id)) }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -465,7 +464,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
-            "Бесплатный ИИ-чат для Android.\nНативное приложение на Kotlin + Jetpack Compose.\nПоддерживает OpenRouter, Groq и локальную модель без инета.",
+            "Бесплатный ИИ-чат для Android.\nНативное приложение на Kotlin + Jetpack Compose.\nПоддерживает Pollinations, Groq и локальную модель без инета.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -515,7 +514,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
 
         Button(
             onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kirilltitov777z-dotcom/ai-chat/releases"))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/kirilltitov777z-dotcom/ai-chat/releases/latest/download/LokiChat.apk"))
                 runCatching {
                     context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
@@ -524,7 +523,7 @@ private fun TabAbout(vm: ChatViewModel, context: Context) {
         ) {
             Icon(Icons.Rounded.Download, null, Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Скачать новую версию")
+            Text("Скачать APK")
         }
     }
 }
