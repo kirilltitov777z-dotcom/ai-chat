@@ -25,8 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -580,35 +578,45 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun localReply(text: String): String {
         val t = text.trim().lowercase()
+
         return when {
             t.isEmpty() -> "Напиши что-нибудь, я отвечу."
+
             t.contains("привет") || t.contains("здравств") || t.contains("хай") ||
             t.contains("добрый") || t.contains("добр") ->
-                "Привет! Я Loki — твой локальный ассистент. Работаю прямо на телефоне без интернета."
+                "Привет! Я Loki — твой локальный ассистент. Работаю прямо на телефоне без интернета. Чем могу помочь?"
+
             t.contains("кто ты") || t.contains("что такое локи") || t.contains("кто я") ||
             t.contains("кто это") ->
-                "Я Loki — локальная модель ИИ. Работаю прямо на твоём устройстве без инета."
+                "Я Loki — локальная модель ИИ. Работаю прямо на твоём устройстве без интернета."
+
             t.contains("код") || t.contains("программ") || t.contains("python") || t.contains("kotlin") ||
             t.contains("java") || t.contains("js") || t.contains("javascript") ||
             t.contains("скрипт") || t.contains("html") || t.contains("css") ->
                 "Я помогу с программированием! Напиши, на каком языке нужен код, и что он должен делать."
+
             t.contains("как") || t.contains("почему") || t.contains("что такое") ||
             t.contains("объясни") || t.contains("расскажи") ->
-                "Задавай вопрос подробнее, и я постараюсь ответить."
+                "Отличный вопрос! Напиши подробнее, и я попробую ответить."
+
             t.contains("перевод") || t.contains("переведи") || t.contains("англий") ||
             t.contains("немецк") || t.contains("китайск") || t.contains("японск") ||
             t.contains("франц") || t.contains("испан") ->
                 "Я могу попробовать перевести текст. Пришли фразу и укажи язык."
+
             t.contains("план") || t.contains("совет") || t.contains("задач") ||
             t.contains("рецепт") || t.contains("готовить") ||
             t.contains("помоги") -> "Я помогу составить план или дать совет. Расскажи подробнее, что нужно."
+
             t.contains("спасибо") || t.contains("благодар") || t.contains("спс") ->
                 listOf("Пожалуйста! Обращайся ещё.", "Рад был помочь! Что дальше?", "Всегда пожалуйста! Есть ещё вопросы?")
                     .toTypedArray()[java.util.Random().nextInt(3)]
+
             t.contains("пока") || t.contains("до свидан") || t.contains("до встречи") || t.contains("прощай") ->
                 listOf("До встречи! Обращайся, если понадобится помощь.",
                     "Пока! Буду рад пообщаться ещё.", "До скорого! Удачи!")
                     .toTypedArray()[java.util.Random().nextInt(3)]
+
             else ->
                 "Понял: «$text». Я Loki — локальная модель без инета. Отвечаю на простые вопросы."
         }
