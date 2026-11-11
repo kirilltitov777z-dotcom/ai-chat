@@ -8,38 +8,21 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0A0F1C;
-            color: #FFFFFF;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            min-height: 100vh;
+            background: #121016;
+            color: #E6E1E9;
+            line-height: 1.5;
         }
         .container {
             max-width: 600px;
-            width: 100%;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .header h1 {
-            font-size: 32px;
-            font-weight: bold;
-            color: #FFFFFF;
-            margin-bottom: 8px;
-        }
-        .header p {
-            color: #8899AA;
-            font-size: 16px;
+            margin: 0 auto;
+            padding: 20px;
         }
         .logo {
             width: 48px;
             height: 48px;
             background: #7C3AED;
             border-radius: 12px;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 12px;
@@ -49,53 +32,58 @@
             height: 24px;
             fill: white;
         }
-        .chat-box {
+        h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #FFFFFF;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #8899AA;
+            margin-bottom: 24px;
+        }
+        .chat {
             background: #121016;
             border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 16px;
             min-height: 300px;
             max-height: 400px;
             overflow-y: auto;
             border: 1px solid #2A2E3C;
+            margin-bottom: 20px;
         }
         .message {
-            margin-bottom: 12px;
             padding: 10px 14px;
             border-radius: 12px;
+            margin-bottom: 10px;
             max-width: 80%;
             font-size: 14px;
-            line-height: 1.4;
         }
         .message.user {
             background: #7C3AED;
             color: white;
             align-self: flex-end;
-            border-bottom-right-radius: 4px;
         }
         .message.ai {
             background: #1E1B24;
             color: #E6E1E9;
             align-self: flex-start;
-            border-bottom-left-radius: 4px;
         }
         .input-area {
             display: flex;
             gap: 8px;
-            margin-top: 16px;
+            margin-top: 20px;
         }
         .input-text {
             flex: 1;
             background: #1E1B24;
-            border: 1px solid #3A3844;
+            border: 1px solid #2A2E3C;
             border-radius: 12px;
             padding: 12px 16px;
             color: white;
             font-size: 14px;
             outline: none;
-        }
-        .input-text:focus {
-            border-color: #7C3AED;
         }
         .btn-send {
             background: #7C3AED;
@@ -110,9 +98,14 @@
         .btn-send:disabled {
             opacity: 0.6;
         }
+        .status {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #8899AA;
+            min-height: 16px;
+        }
         .download-section {
             margin-top: 30px;
-            text-align: center;
             padding: 24px;
             background: #121016;
             border-radius: 16px;
@@ -120,13 +113,14 @@
         }
         .download-section h2 {
             font-size: 20px;
+            font-weight: bold;
             margin-bottom: 12px;
             color: #FFFFFF;
         }
         .download-section p {
+            font-size: 14px;
             color: #8899AA;
             margin-bottom: 16px;
-            font-size: 14px;
         }
         .btn-download {
             background: #7C3AED;
@@ -137,50 +131,40 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+            width: 100%;
         }
         .btn-download:hover {
-            background: #6D28D9;
-        }
-        .status {
-            margin-top: 8px;
-            font-size: 12px;
-            color: #667788;
+            background: #8B5CF6;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
-                </svg>
-            </div>
-            <h1>LokiChat</h1>
-            <p>Бесплатный ИИ-чат без ключа и регистрации</p>
+        <div class="logo">
+            <svg viewBox="0 0 24 24">
+                <path d="M22,28h64c6.6,0 12,5.4 12,12v28c0,6.6 -5.4,12 -12,12H22c-6.6,0 -12,-5.4 -12,-12V40c0,-6.6 5.4,-12 12,-12z" />
+                <circle cx="42" cy="52" r="4" fill="#7C3AED"/>
+                <circle cx="54" cy="52" r="4" fill="#7C3AED"/>
+                <circle cx="66" cy="52" r="4" fill="#7C3AED"/>
+            </svg>
         </div>
+        <h1>LokiChat</h1>
+        <p class="subtitle">Бесплатный ИИ-чат без ключа и регистрации</p>
 
-        <div class="chat-box" id="chatBox">
-            <div class="message ai">
-                Привет! Я Loki — бесплатный ИИ-ассистент. Задавай любой вопрос!
-            </div>
+        <div class="chat" id="chatBox">
+            <div class="message ai">Привет! Я Loki — бесплатный ИИ-ассистент. Работаю прямо в браузере без ключа и регистрации.</div>
         </div>
 
         <div class="input-area">
             <input type="text" id="inputText" class="input-text" placeholder="Напиши сообщение...">
             <button class="btn-send" id="btnSend">Отправить</button>
         </div>
-
         <div class="status" id="status"></div>
 
         <div class="download-section">
             <h2>Скачать приложение</h2>
             <p>Нативное приложение для Android с Material You дизайном, локальной моделью и экспортом чатов.</p>
-            <a href="https://github.com/kirilltitov777z-dotcom/ai-chat/releases/latest/download/LokiChat.apk" class="btn-download">
-                Скачать LokiChat.apk
-            </a>
+            <a href="https://github.com/kirilltitov777z-dotcom/ai-chat/releases/latest/download/LokiChat.apk" class="btn-download">Скачать LokiChat.apk</a>
         </div>
     </div>
 
@@ -190,19 +174,11 @@
         const btnSend = document.getElementById('btnSend');
         const status = document.getElementById('status');
 
-        function addMessage(text, isUser) {
-            const div = document.createElement('div');
-            div.className = 'message ' + (isUser ? 'user' : 'ai');
-            div.textContent = text;
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
         async function sendMessage() {
             const text = inputText.value.trim();
             if (!text) return;
 
-            addMessage(text, true);
+            addMessage(text, 'user');
             inputText.value = '';
             btnSend.disabled = true;
             status.textContent = 'Отправляю...';
@@ -227,14 +203,22 @@
 
                 const data = await response.json();
                 const aiText = data.choices?.[0]?.message?.content || 'Ошибка: пустой ответ';
-                addMessage(aiText, false);
+                addMessage(aiText, 'ai');
             } catch (err) {
-                addMessage('Ошибка: ' + err.message, false);
+                addMessage('Ошибка: ' + err.message, 'ai');
             } finally {
                 btnSend.disabled = false;
                 status.textContent = '';
                 inputText.focus();
             }
+        }
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.className = 'message ' + sender;
+            div.textContent = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
         btnSend.addEventListener('click', sendMessage);
